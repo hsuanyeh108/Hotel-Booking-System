@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Room Booking System</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Hotel Booking System</h1>
+        <nav>
+            <button id="nav-search" onclick="showSection('search-section')">Guest Search</button>
+            <button id="nav-admin" onclick="showSection('admin-section')">Admin Dashboard</button>
+        </nav>
+    </header>
+
+    <main>
+        <!-- 01 & 03: Search & Room List Section -->
+        <section id="search-section" class="active-section">
+            <h2>Search Available Rooms</h2>
+            <div class="search-box">
+                <label>Check-in: <input type="date" id="checkin-date"></label>
+                <label>Check-out: <input type="date" id="checkout-date"></label>
+                <button onclick="searchRooms()">Search Rooms</button>
+            </div>
+
+            <div id="room-list" class="room-grid">
+                <!-- dynamic room list area-->
+            </div>
+        </section>
+
+        <!-- 04: Booking Form Section -->
+        <section id="booking-section" class="hidden-section">
+            <h2>Complete Your Booking</h2>
+            <form id="booking-form" onsubmit="submitBooking(event)">
+                <p>Selected Room: <strong id="selected-room-name">-</strong></p>
+                <p>Price: <strong id="selected-room-price">-</strong></p>
+                <label>Full Name: <input type="text" id="guest-name" required></label>
+                <label>Email: <input type="email" id="guest-email" required></label>
+                <button type="submit">Confirm Booking</button>
+                <button type="button" onclick="showSection('search-section')">Back</button>
+            </form>
+        </section>
+
+        <!-- 05: Booking Success Section -->
+        <section id="success-section" class="hidden-section">
+            <h2>Booking Confirmed!</h2>
+            <p>Thank you for your reservation.</p>
+            <div id="success-details"></div>
+            <button onclick="showSection('search-section')">Book Another Room</button>
+        </section>
+
+        <!-- 06: Admin Manage Bookings Section -->
+        <section id="admin-section" class="hidden-section">
+            <h2>Admin Booking Management</h2>
+            <table border="1" style="width:100%; text-align:left; border-collapse:collapse;">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Guest</th>
+                        <th>Room</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-booking-list">
+                       <!-- dynamic booking list  -->
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>

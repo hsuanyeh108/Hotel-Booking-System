@@ -1,0 +1,9 @@
+body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ccc; padding-bottom: 10px; }
+nav button { padding: 8px 16px; margin-left: 10px; cursor: pointer; }
+.search-box { background: #f4f4f4; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+.room-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; }
+.room-card { border: 1px solid #ddd; padding: 15px; border-radius: 8px; background: #fff; }
+.hidden-section { display: none; }
+.active-section { display: block; }
+form label { display: block; margin: 10px 0; }
