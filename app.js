@@ -10,6 +10,11 @@ let sampleRooms = [
 let bookings = [];
 let currentSelectedRoom = null;
 
+// 輔助函式：檢查房間是否已被預訂
+function isRoomBooked(roomId) {
+    return bookings.some(b => b.roomId === roomId && (b.status === 'Confirmed' || b.status === 'Pending'));
+}
+
 // 切換頁面視圖
 function showSection(sectionId) {
     document.querySelectorAll('main > section').forEach(sec => {
@@ -33,37 +38,84 @@ function showSection(sectionId) {
     }
 }
 
-// 🔑 補齊：Admin 登入處理函式
+// Admin 登入與註冊
 function handleAdminLogin(event) {
     event.preventDefault();
-    // 驗證成功後跳轉到 Admin 主頁面
     showSection('admin-home-section');
 }
 
-// 🔑 補齊：Admin 註冊處理函式
 function handleAdminRegister(event) {
     event.preventDefault();
     alert('Account created successfully!');
     showSection('admin-login-section');
 }
 
+// (1) 渲染房間列表（含判斷是否可預訂及 Non-available 樣式）
 function renderRooms(roomsToRender) {
     const list = document.getElementById('room-list');
-    list.innerHTML = roomsToRender.map(room => `
-        <div class="room-card">
-            <img src="${room.img}" alt="${room.name}" style="width:100%; height:160px; object-fit:cover; border-radius:8px; margin-bottom:12px;">
-            <div>
-                <span class="tag">${room.tag}</span>
-                <h3 style="font-size:16px; margin: 4px 0;">${room.name}</h3>
-                <div class="price" style="margin-bottom:12px;">${room.price}</div>
+    
+    list.innerHTML = roomsToRender.map(room => {
+        const booked = isRoomBooked(room.id);
+        const tagText = booked ? "Non-available" : "Available";
+        const tagBg = booked ? "#fee2e2" : "#dcfce7";
+        const tagColor = booked ? "#dc2626" : "#15803d";
+        const btnAttr = booked ? "disabled style='background:#94a3b8; cursor:not-allowed;'" : "style='background:#1E3A8A; cursor:pointer;'";
+        const btnText = booked ? "Already Booked" : "Book Now";
+
+        return `
+            <div class="room-card" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; background: white;">
+                <img src="${room.img}" alt="${room.name}" style="width:100%; height:160px; object-fit:cover; border-radius:8px; margin-bottom:12px;">
+                <div>
+                    <span class="tag" style="background:${tagBg}; color:${tagColor}; padding:2px 8px; border-radius:4px; font-size:12px; font-weight:bold;">${tagText}</span>
+                    <h3 style="font-size:16px; margin: 6px 0;">${room.name} (#${room.id})</h3>
+                    <div class="price" style="margin-bottom:12px; font-weight:bold; color:#1E3A8A;">${room.price}</div>
+                </div>
+                <button ${btnAttr} onclick="selectRoom(${room.id})">${btnText}</button>
             </div>
-            <button onclick="selectRoom(${room.id})">Book Now</button>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
+// (2) & (3) 搜尋與日期邏輯驗證防呆
 function searchRooms() {
+    const checkinInput = document.getElementById('checkin').value;
+    const checkoutInput = document.getElementById('checkout').value;
+
+    // (3) 日期防呆驗證跳窗
+    if (checkinInput && checkoutInput) {
+        const checkinDate = new Date(checkinInput);
+        const checkoutDate = new Date(checkoutInput);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (checkinDate < today) {
+            alert("Check-in date cannot be in the past! Please select a valid date.");
+            return;
+        }
+
+        if (checkoutDate <= checkinDate) {
+            alert("Check-out date must be later than Check-in date! Please select a valid date range.");
+            return;
+        }
+    }
+
+    // (2) 渲染搜尋結果
     renderRooms(sampleRooms);
+
+    // (2) 提供搜尋視覺回饋提示
+    let notice = document.getElementById('search-notice');
+    if (!notice) {
+        notice = document.createElement('div');
+        notice.id = 'search-notice';
+        notice.style.cssText = "margin-top: 12px; padding: 8px 12px; background: #e0f2fe; color: #0369a1; border-radius: 6px; font-weight: 500;";
+        document.querySelector('.search-box').appendChild(notice);
+    }
+    
+    if (checkinInput && checkoutInput) {
+        notice.innerText = `Search applied for ${checkinInput} to ${checkoutInput}. Showing available statuses below.`;
+    } else {
+        notice.innerText = `Showing all room statuses below.`;
+    }
 }
 
 function filterRooms() {
@@ -73,16 +125,22 @@ function filterRooms() {
 }
 
 function selectRoom(roomId) {
+    // 防呆：已預訂房間不可選擇
+    if (isRoomBooked(roomId)) {
+        alert("This room is already booked!");
+        return;
+    }
+
     currentSelectedRoom = sampleRooms.find(r => r.id === roomId);
-    document.getElementById('selected-room-name').innerText = currentSelectedRoom.name;
+    document.getElementById('selected-room-name').innerText = `${currentSelectedRoom.name} (#${currentSelectedRoom.id})`;
     document.getElementById('selected-room-price').innerText = currentSelectedRoom.price;
 
     const previewContainer = document.getElementById('selected-room-card-preview');
     previewContainer.innerHTML = `
-        <div class="room-card">
+        <div class="room-card" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; background: white;">
             <img src="${currentSelectedRoom.img}" alt="${currentSelectedRoom.name}" style="width:100%; height:160px; object-fit:cover; border-radius:8px; margin-bottom:12px;">
             <div>
-                <span class="tag">${currentSelectedRoom.tag}</span>
+                <span class="tag" style="background:#dcfce7; color:#15803d; padding:2px 8px; border-radius:4px; font-size:12px; font-weight:bold;">Available</span>
                 <h3 style="font-size:16px; margin: 4px 0;">${currentSelectedRoom.name}</h3>
                 <div class="price">${currentSelectedRoom.price}</div>
             </div>
@@ -92,10 +150,19 @@ function selectRoom(roomId) {
     showSection('booking-section');
 }
 
+// (1) 提交預訂並鎖定該房間 ID
 function submitBooking(event) {
     event.preventDefault();
+
+    if (isRoomBooked(currentSelectedRoom.id)) {
+        alert("Sorry, this room was just booked by someone else!");
+        showSection('search-section');
+        return;
+    }
+
     const newBooking = {
         id: 'BK-' + Date.now().toString().slice(-4),
+        roomId: currentSelectedRoom.id,
         guest: document.getElementById('guest-name').value,
         email: document.getElementById('guest-email').value,
         phone: document.getElementById('guest-phone').value,
@@ -104,7 +171,13 @@ function submitBooking(event) {
         img: currentSelectedRoom.img,
         status: 'Confirmed'
     };
+    
     bookings.push(newBooking);
+
+    // 重設表單輸入值
+    document.getElementById('guest-name').value = '';
+    document.getElementById('guest-email').value = '';
+    document.getElementById('guest-phone').value = '';
 
     showBookingDetails(newBooking.id);
 }
@@ -117,7 +190,7 @@ function showBookingDetails(bookingId) {
         <div style="background:#fff; padding:20px; border-radius:8px; border:1px solid #e2e8f0; margin: 15px 0;">
             <p style="margin-bottom:8px;"><strong>Booking ID:</strong> ${b.id}</p>
             <p style="margin-bottom:8px;"><strong>Guest Name:</strong> ${b.guest}</p>
-            <p style="margin-bottom:8px;"><strong>Room Type:</strong> ${b.room}</p>
+            <p style="margin-bottom:8px;"><strong>Room Type:</strong> ${b.room} (#${b.roomId})</p>
             <p style="margin-bottom:8px;"><strong>Total Price:</strong> ${b.price}</p>
             <p><strong>Status:</strong> <span class="${b.status === 'Confirmed' ? 'status-confirm' : 'status-cancelled'}">${b.status}</span></p>
         </div>
@@ -125,7 +198,6 @@ function showBookingDetails(bookingId) {
     showSection('success-section');
 }
 
-// 渲染 Guest Booking List
 function renderGuestBookings() {
     const container = document.getElementById('guest-booking-cards');
     const visibleBookings = bookings.filter(b => b.status !== 'Cancelled by Guest');
@@ -136,58 +208,64 @@ function renderGuestBookings() {
     }
 
     container.innerHTML = visibleBookings.map(b => `
-        <div class="room-card">
+        <div class="room-card" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; background: white;">
             <img src="${b.img}" style="width:100%; height:160px; object-fit:cover; border-radius:8px; margin-bottom:12px;">
             <div>
-                <span class="tag" style="background:#e0f2fe; color:#0369a1;">Booking ID: ${b.id}</span>
-                <h3 style="font-size:16px; margin: 6px 0;">${b.room}</h3>
+                <span class="tag" style="background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:4px; font-size:12px;">Booking ID: ${b.id}</span>
+                <h3 style="font-size:16px; margin: 6px 0;">${b.room} (#${b.roomId})</h3>
                 <p style="font-size:14px; color:#475569; margin-bottom:4px;">Guest: ${b.guest}</p>
-                <div class="price" style="margin-bottom:8px;">${b.price}</div>
-                <p style="margin-bottom:12px;">Status: <strong class="${b.status === 'Confirmed' ? 'status-confirm' : 'status-cancelled'}">${b.status}</strong></p>
+                <div class="price" style="margin-bottom:8px; font-weight:bold;">${b.price}</div>
+                <p style="margin-bottom:12px;">Status: <strong style="color: ${b.status === 'Confirmed' ? '#166534' : '#dc2626'}">${b.status}</strong></p>
             </div>
             <div style="display:flex; gap:8px;">
-                <button style="background:#1E3A8A; flex:1;" onclick="showBookingDetails('${b.id}')">View</button>
-                <button style="background:#dc2626; flex:1;" onclick="cancelBookingByGuest('${b.id}')">Cancel</button>
+                <button style="background:#1E3A8A; flex:1; color:white; border:none; padding:8px; border-radius:6px; cursor:pointer;" onclick="showBookingDetails('${b.id}')">View</button>
+                <button style="background:#dc2626; flex:1; color:white; border:none; padding:8px; border-radius:6px; cursor:pointer;" onclick="cancelBookingByGuest('${b.id}')">Cancel</button>
             </div>
         </div>
     `).join('');
 }
 
-// 房客點擊 Cancel
+// 房客取消訂單，房間釋放回 Available
 function cancelBookingByGuest(bookingId) {
     if (confirm('Are you sure you want to cancel this booking?')) {
         const b = bookings.find(item => item.id === bookingId);
         if (b) {
             b.status = 'Cancelled by Guest';
             renderGuestBookings();
+            renderRooms(sampleRooms); // 釋放房間，更新卡片狀態為 Available
         }
     }
 }
 
-// 渲染 Admin Room Type Listings (支援 Edit & Delete)
 function renderAdminRoomTypes() {
     const container = document.getElementById('admin-room-type-grid');
     if (sampleRooms.length === 0) {
         container.innerHTML = '<p style="color:#64748b;">No room types available.</p>';
         return;
     }
-    container.innerHTML = sampleRooms.map(room => `
-        <div class="room-card">
-            <img src="${room.img}" alt="${room.name}" style="width:100%; height:160px; object-fit:cover; border-radius:8px; margin-bottom:12px;">
-            <div>
-                <span class="tag">${room.tag}</span>
-                <h3 style="font-size:16px; margin: 4px 0;">${room.name}</h3>
-                <div class="price" style="margin-bottom:12px;">${room.price}</div>
+    container.innerHTML = sampleRooms.map(room => {
+        const booked = isRoomBooked(room.id);
+        const tagText = booked ? "Non-available" : "Available";
+        const tagBg = booked ? "#fee2e2" : "#dcfce7";
+        const tagColor = booked ? "#dc2626" : "#15803d";
+
+        return `
+            <div class="room-card" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; background: white;">
+                <img src="${room.img}" alt="${room.name}" style="width:100%; height:160px; object-fit:cover; border-radius:8px; margin-bottom:12px;">
+                <div>
+                    <span class="tag" style="background:${tagBg}; color:${tagColor}; padding:2px 8px; border-radius:4px; font-size:12px; font-weight:bold;">${tagText}</span>
+                    <h3 style="font-size:16px; margin: 4px 0;">${room.name} (#${room.id})</h3>
+                    <div class="price" style="margin-bottom:12px;">${room.price}</div>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button style="background:#1E3A8A; flex:1; color:white; border:none; padding:8px; border-radius:6px; cursor:pointer;" onclick="editRoomType(${room.id})">Edit</button>
+                    <button style="background:#dc2626; flex:1; color:white; border:none; padding:8px; border-radius:6px; cursor:pointer;" onclick="deleteRoomType(${room.id})">Delete</button>
+                </div>
             </div>
-            <div style="display:flex; gap:8px;">
-                <button style="background:#1E3A8A; flex:1;" onclick="editRoomType(${room.id})">Edit</button>
-                <button style="background:#dc2626; flex:1;" onclick="deleteRoomType(${room.id})">Delete</button>
-            </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
-// Admin 編輯房型
 function editRoomType(roomId) {
     const room = sampleRooms.find(r => r.id === roomId);
     if (!room) return;
@@ -205,7 +283,6 @@ function editRoomType(roomId) {
     renderRooms(sampleRooms);
 }
 
-// Admin 刪除房型
 function deleteRoomType(roomId) {
     if (confirm("Are you sure you want to delete this room type?")) {
         sampleRooms = sampleRooms.filter(r => r.id !== roomId);
@@ -214,7 +291,6 @@ function deleteRoomType(roomId) {
     }
 }
 
-// 渲染 Admin Manage Bookings
 function renderAdminBookings() {
     const tbody = document.getElementById('admin-booking-list');
     const visibleBookings = bookings.filter(b => b.status !== 'Cancelled by Guest');
@@ -227,7 +303,7 @@ function renderAdminBookings() {
         <tr style="border-bottom: 1px solid #e2e8f0;">
             <td style="padding:12px;">${b.id}</td>
             <td style="padding:12px;">${b.guest}</td>
-            <td style="padding:12px;">${b.room}</td>
+            <td style="padding:12px;">${b.room} (#${b.roomId})</td>
             <td style="padding:12px;">
                 <select onchange="updateBookingStatus('${b.id}', this.value)" style="padding:4px 8px; border-radius:4px; border:1px solid #cbd5e1;">
                     <option value="Confirmed" ${b.status === 'Confirmed' ? 'selected' : ''}>Confirmed</option>
@@ -243,14 +319,15 @@ function renderAdminBookings() {
     `).join('');
 }
 
-// Admin 變更狀態
+// Admin 取消訂單也會釋放房間
 function updateBookingStatus(bookingId, newStatus) {
     const b = bookings.find(item => item.id === bookingId);
     if (b) {
         b.status = newStatus;
         renderAdminBookings();
+        renderRooms(sampleRooms);
     }
 }
 
-// 頁面初始化
+// 初始化
 searchRooms();
