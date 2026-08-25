@@ -10,6 +10,18 @@ let sampleRooms = [
 let bookings = [];
 let currentSelectedRoom = null;
 
+// 取得當前裝置儲存的個人訂單 ID 列表
+function getMyBookingIds() {
+    return JSON.parse(localStorage.getItem('my_booking_ids') || '[]');
+}
+
+// 儲存新訂單 ID 到當前裝置
+function saveMyBookingId(id) {
+    const ids = getMyBookingIds();
+    ids.push(id);
+    localStorage.setItem('my_booking_ids', JSON.stringify(ids));
+}
+
 // 檢查房間是否已被預訂
 function isRoomBooked(roomId) {
     return bookings.some(b => b.roomId === roomId && (b.status === 'Confirmed' || b.status === 'Pending'));
@@ -51,7 +63,7 @@ function handleAdminRegister(event) {
     showSection('admin-login-section');
 }
 
-// (1) 渲染房間列表（無 #101 數字）
+// 渲染房間列表
 function renderRooms(roomsToRender) {
     const list = document.getElementById('room-list');
     if (!list) return;
@@ -78,7 +90,17 @@ function renderRooms(roomsToRender) {
     }).join('');
 }
 
-// (2) 日期防呆驗證與搜尋修復
+// (1) 關鍵修復：即時關鍵字搜尋過濾
+function filterRooms() {
+    const searchInput = document.getElementById('global-search');
+    if (!searchInput) return;
+
+    const query = searchInput.value.toLowerCase().trim();
+    const filtered = sampleRooms.filter(r => r.name.toLowerCase().includes(query));
+    renderRooms(filtered);
+}
+
+// 日期驗證與搜尋
 function searchRooms() {
     const checkinElem = document.getElementById('checkin');
     const checkoutElem = document.getElementById('checkout');
@@ -86,7 +108,6 @@ function searchRooms() {
     const checkinInput = checkinElem ? checkinElem.value : '';
     const checkoutInput = checkoutElem ? checkoutElem.value : '';
 
-    // 只有當使用者「填寫了日期」時，才進行防呆檢查
     if (checkinInput && checkoutInput) {
         const checkinDate = new Date(checkinInput);
         const checkoutDate = new Date(checkoutInput);
@@ -103,22 +124,13 @@ function searchRooms() {
             return;
         }
     } else if (checkinInput || checkoutInput) {
-        // 只填寫單一日期時提示
         alert("Please select both Check-in and Check-out dates!");
         return;
     }
 
-    // 順利渲染房間卡片
     renderRooms(sampleRooms);
 }
 
-function filterRooms() {
-    const query = document.getElementById('global-search').value.toLowerCase();
-    const filtered = sampleRooms.filter(r => r.name.toLowerCase().includes(query));
-    renderRooms(filtered);
-}
-
-// (3) 點擊預訂處理
 function selectRoom(roomId) {
     if (isRoomBooked(roomId)) {
         alert("This room is already booked!");
@@ -158,8 +170,9 @@ function submitBooking(event) {
         return;
     }
 
+    const newBookingId = 'BK-' + Date.now().toString().slice(-4);
     const newBooking = {
-        id: 'BK-' + Date.now().toString().slice(-4),
+        id: newBookingId,
         roomId: currentSelectedRoom.id,
         guest: document.getElementById('guest-name').value,
         email: document.getElementById('guest-email').value,
@@ -172,14 +185,15 @@ function submitBooking(event) {
     
     bookings.push(newBooking);
 
-    // 重設表單
+    // (2) 關鍵修復：紀錄這筆訂單屬於當前 Guest 瀏覽器
+    saveMyBookingId(newBookingId);
+
+    // 清空表單
     document.getElementById('guest-name').value = '';
     document.getElementById('guest-email').value = '';
     document.getElementById('guest-phone').value = '';
 
-    // 即時更新房間卡片
     renderRooms(sampleRooms);
-
     showBookingDetails(newBooking.id);
 }
 
@@ -199,18 +213,39 @@ function showBookingDetails(bookingId) {
     showSection('success-section');
 }
 
+// 方案 B：預設清空，必須搜尋才顯示
 function renderGuestBookings() {
+    const container = document.getElementById('guest-booking-cards');
+    const input = document.getElementById('booking-search-input');
+    if (input) input.value = ''; // 清空搜尋框
+    if (container) container.innerHTML = '<p style="color:#64748b;">Please enter your Name, Email, or Booking ID above to search your booking.</p>';
+}
+
+// 執行訂單查詢
+function searchGuestBookings() {
+    const query = document.getElementById('booking-search-input').value.toLowerCase().trim();
     const container = document.getElementById('guest-booking-cards');
     if (!container) return;
 
-    const visibleBookings = bookings.filter(b => b.status !== 'Cancelled by Guest');
-
-    if (visibleBookings.length === 0) {
-        container.innerHTML = '<p style="color:#64748b;">No active bookings found.</p>';
+    if (!query) {
+        alert("Please enter a Name, Email or Booking ID to search!");
         return;
     }
 
-    container.innerHTML = visibleBookings.map(b => `
+    // 只搜尋符合 Name / Email / Booking ID 的訂單
+    const matchedBookings = bookings.filter(b => 
+        b.status !== 'Cancelled by Guest' && 
+        (b.id.toLowerCase().includes(query) || 
+         b.guest.toLowerCase().includes(query) || 
+         b.email.toLowerCase().includes(query))
+    );
+
+    if (matchedBookings.length === 0) {
+        container.innerHTML = '<p style="color:#dc2626;">No matching bookings found.</p>';
+        return;
+    }
+
+    container.innerHTML = matchedBookings.map(b => `
         <div class="room-card" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; background: white;">
             <img src="${b.img}" style="width:100%; height:160px; object-fit:cover; border-radius:8px; margin-bottom:12px;">
             <div>
@@ -295,6 +330,7 @@ function deleteRoomType(roomId) {
     }
 }
 
+// Admin 後台（可以看到「所有人」的訂單）
 function renderAdminBookings() {
     const tbody = document.getElementById('admin-booking-list');
     if (!tbody) return;

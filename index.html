@@ -13,7 +13,7 @@
         <h1>Hotel Booking System</h1>
         
         <div class="header-search">
-            <input type="text" id="global-search" placeholder="Search rooms..." onkeyup="filterRooms()">
+            <input type="text" id="global-search" placeholder="Search rooms..." oninput="filterRooms()">
         </div>
 
         <nav>
@@ -78,7 +78,15 @@
 
         <!-- 03_Guest View Booking List -->
         <section id="guest-booking-list-section" class="hidden-section">
-            <h2 style="margin-bottom: 20px;">My Booking List</h2>
+            <h2 style="margin-bottom: 16px;">Find My Booking</h2>
+            
+            <!-- 方案 B：搜尋查詢框 -->
+            <div style="display: flex; gap: 10px; margin-bottom: 24px; max-width: 500px;">
+                <input type="text" id="booking-search-input" placeholder="Enter Guest Name, Email or Booking ID..." style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                <button onclick="searchGuestBookings()" style="background: #1E3A8A; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">Search</button>
+            </div>
+
+            <!-- 訂單結果卡片區 -->
             <div id="guest-booking-cards" class="room-grid"></div>
         </section>
 
