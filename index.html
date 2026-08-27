@@ -8,14 +8,16 @@
 </head>
 <body>
 
-    <!-- 頂部 Header 導覽列 -->
+    <!--Header Navbar-->
     <header>
         <h1>Hotel Booking System</h1>
         
+        <!--Search Navbar searching by room types name-->
         <div class="header-search">
             <input type="text" id="global-search" placeholder="Search rooms..." oninput="filterRooms()">
         </div>
 
+        <!--Header button for different user roles / Guest & Admin-->
         <nav>
             <button onclick="showSection('search-section')">Search Rooms</button>
             <button onclick="showSection('guest-booking-list-section')">Guest Booking List</button>
@@ -24,7 +26,7 @@
     </header>
 
     <main>
-        <!-- 01_Guest Search Room -->
+        <!-- 01_Guest Search Room by calendar dates & Search rooms button -->
         <section id="search-section" class="active-section">
             <h2 style="margin-bottom: 16px;">Search Available Rooms</h2>
             
@@ -40,6 +42,7 @@
                 <button onclick="searchRooms()">Search Rooms</button>
             </div>
 
+            <!--Room card grid-->
             <div id="room-list" class="room-grid"></div>
         </section>
 
@@ -51,6 +54,7 @@
                 <p style="margin-bottom: 10px;"><strong>Selected Room:</strong> <span id="selected-room-name">-</span></p>
                 <p style="margin-bottom: 20px;"><strong>Price:</strong> <span id="selected-room-price" style="color: #1E3A8A; font-weight: bold;">-</span></p>
 
+                <!--Booking Form with filling your own information-->
                 <label>
                     Full Name:
                     <input type="text" id="guest-name" required placeholder="Enter your full name">
@@ -66,31 +70,34 @@
                     <input type="tel" id="guest-phone" required placeholder="Enter your phone number">
                 </label>
 
+                <!--Booking Form confirm booking button-->
                 <div style="margin-top: 20px; display: flex; gap: 12px;">
                     <button type="submit">Confirm Booking</button>
                     <button type="button" style="background: #64748B;" onclick="showSection('search-section')">Cancel</button>
                 </div>
             </form>
 
+            <!--Booking order will shown after clicking booking confirm-->
             <h3 style="margin-bottom: 12px; font-size: 18px;">Selected Room Preview</h3>
             <div id="selected-room-card-preview" style="max-width: 400px;"></div>
         </section>
 
-        <!-- Guest 搜尋訂單區塊 (Booking ID + Phone) -->
+        <!-- 03_Guest Finding Order using Guest(Booking ID + Phone) -->
         <section id="guest-booking-list-section" class="hidden-section">
             <h2 style="margin-bottom: 16px;">Find My Booking</h2>
             
+            <!--Booking order will shown after filling Booking ID + Phone and clicking searching button-->
             <div style="display: flex; gap: 10px; margin-bottom: 24px; max-width: 650px; flex-wrap: wrap;">
                 <input type="text" id="search-booking-id" placeholder="Booking ID (e.g. BK-1234)" style="flex: 1; min-width: 200px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
                 <input type="text" id="search-booking-phone" placeholder="Phone Number" style="flex: 1; min-width: 200px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
                 <button onclick="searchGuestBookings()" style="background: #1E3A8A; color: white; border: none; padding: 10px 24px; border-radius: 6px; cursor: pointer; font-weight: bold;">Search</button>
             </div>
 
-            <!-- 訂單結果卡片區 -->
+            <!-- Guest's booking order card shown -->
             <div id="guest-booking-cards" class="room-grid"></div>
         </section>
 
-        <!-- 04_Guest Booking Success -->
+        <!-- 04_Guest Booking Success page -->
         <section id="success-section" class="hidden-section">
             <div style="background: #1E3A8A; color: white; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; font-size: 18px; margin-bottom: 20px;">
                 Booking Successful ! Thanks for your booking !
@@ -105,6 +112,7 @@
             <div class="login-card">
                 <h2 style="margin-bottom: 24px; text-align: center;">Admin Log In</h2>
                 
+                <!-- Admin Login Page fill in information-->
                 <form onsubmit="handleAdminLogin(event)">
                     <label>Email
                         <input type="email" id="admin-acc" required placeholder="Enter email">
@@ -115,6 +123,7 @@
                     <button type="submit" style="width: 100%; margin-top: 15px;">Log In</button>
                 </form>
 
+                <!-- Admin Login Page external systems to login-->
                 <div style="display:flex; justify-content:center; gap:8px; margin-top:20px; margin-bottom:16px;">
                     <button type="button" title="Desktop" style="background:#F8FAFC; border:1px solid #CBD5E1; padding:6px 12px; border-radius:6px; cursor:pointer; display:flex; align-items:center;">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -137,6 +146,7 @@
                     </button>
                 </div>
 
+                <!-- Admin Login Page if don't have an account, for register page button-->
                 <p style="text-align:center; font-size:14px; color:#64748B; margin:0;">
                     Don't have an account? 
                     <a href="#" onclick="showSection('admin-register-section')" style="color:#1E3A8A; font-weight:bold; text-decoration:none;">Register</a>
@@ -144,7 +154,7 @@
             </div>
         </section>
 
-        <!-- 06_Admin Register Page -->
+        <!-- 06_Admin Register Page to fill in information -->
         <section id="admin-register-section" class="hidden-section">
             <div class="login-card">
                 <h2 style="margin-bottom: 20px; text-align: center;">Admin Register</h2>
@@ -160,6 +170,8 @@
                     </label>
                     <button type="submit" style="width: 100%; margin-top: 15px; background:#166534;">Create Account</button>
                 </form>
+
+                <!-- Admin Register Page, if already have an account, click on and get back to login page -->
                 <p style="text-align:center; margin-top:16px; font-size:14px; color:#64748B;">
                     Already have an account? 
                     <a href="#" onclick="showSection('admin-login-section')" style="color:#1E3A8A; font-weight:bold; text-decoration:none;">Log In</a>
@@ -167,7 +179,7 @@
             </div>
         </section>
 
-        <!-- 07_Admin Home Page -->
+        <!-- 07_Admin Home Page, showing booking order and room types listings cards grid  -->
         <section id="admin-home-section" class="hidden-section">
             <h2 style="margin-bottom: 20px;">Admin Dashboard</h2>
             <div class="admin-dashboard-grid">
@@ -188,7 +200,7 @@
             </div>
         </section>
 
-        <!-- 08_Admin Room Type Listings -->
+        <!-- 08_Admin Room Type Listings page-->
         <section id="admin-room-types-section" class="hidden-section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                 <h2>Admin - Room Type Listings</h2>
@@ -198,14 +210,16 @@
                 </div>
             </div>
 
-            <!-- 房型列表卡片區 -->
+            <!-- Admin Room types cards area -->
             <div id="admin-room-type-grid" class="room-grid"></div>
         </section>
 
-        <!-- 新增/編輯房型彈窗 (Modal) -->
+        <!-- Adding and modify the room types pop up windows(Modal) -->
         <div id="add-room-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;">
             <div style="background: white; padding: 24px; border-radius: 8px; width: 100%; max-width: 450px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                 <h3 id="modal-title" style="margin-bottom: 16px;">Add New Room Type</h3>
+                
+                <!-- The form information should be fill in -->
                 <form onsubmit="handleSaveRoomType(event)">
                     <input type="hidden" id="edit-room-id">
                     <div style="margin-bottom: 12px;">
@@ -232,12 +246,14 @@
             </div>
         </div>
 
-        <!-- 09_Admin Manage Bookings -->
+        <!-- 09_Admin Manage Bookings page-->
         <section id="admin-manage-section" class="hidden-section">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
                 <h2>Admin - Manage Bookings</h2>
                 <button style="background:#64748B; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;" onclick="showSection('admin-home-section')">Back to Dashboard</button>
             </div>
+
+            <!-- Admin Manage Bookings page shown the guest's order and information-->
             <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; border: 1px solid #E2E8F0;">
                 <thead>
                     <tr style="background: #F1F5F9; text-align: left; border-bottom: 2px solid #E2E8F0;">

@@ -1,3 +1,4 @@
+/* Room types contents */
 let sampleRooms = [
     { id: 101, name: "Standard Single Room", price: "A$45/per night", description: "Free Wi-Fi, Single Bed, Air Conditioning", tag: "Available", img: "img/Hotel Single Room.jpg" },
     { id: 102, name: "Double Room", price: "A$90/per night", description: "Free Wi-Fi, Queen Bed, Breakfast included, City View", tag: "Available", img: "img/Double Room.jpg" },
@@ -10,16 +11,19 @@ let sampleRooms = [
 let bookings = [];
 let currentSelectedRoom = null;
 
+/* Show the Bookings Status */
 function isRoomBooked(roomId) {
     return bookings.some(b => b.roomId === roomId && (b.status === 'Confirmed' || b.status === 'Pending'));
 }
 
+/* Admin management page for delete or add room types */
 function showSection(sectionId) {
     document.querySelectorAll('main > section').forEach(sec => {
         sec.classList.remove('active-section');
         sec.classList.add('hidden-section');
     });
 
+    /* If booking cancel by guest, the Admin manage page will delete the order instantly */
     const targetSection = document.getElementById(sectionId);
     if (targetSection) {
         targetSection.classList.remove('hidden-section');
@@ -37,6 +41,7 @@ function showSection(sectionId) {
     }
 }
 
+/* Admin login page warning windows */
 function handleAdminLogin(event) {
     event.preventDefault();
     showSection('admin-home-section');
@@ -48,6 +53,7 @@ function handleAdminRegister(event) {
     showSection('admin-login-section');
 }
 
+/* The room cards should shown the active status */
 function renderRooms(roomsToRender) {
     const list = document.getElementById('room-list');
     if (!list) return;
@@ -75,6 +81,7 @@ function renderRooms(roomsToRender) {
     }).join('');
 }
 
+/* Search function for calendar checkin /  checkout dates */
 function filterRooms() {
     const searchInput = document.getElementById('global-search');
     if (!searchInput) return;
@@ -87,6 +94,7 @@ function filterRooms() {
     renderRooms(filtered);
 }
 
+/* Check the logic of checkin and checkout dates, checkout date should be later than checkin date */
 function searchRooms() {
     const checkinElem = document.getElementById('checkin');
     const checkoutElem = document.getElementById('checkout');
@@ -116,7 +124,7 @@ function searchRooms() {
 
     renderRooms(sampleRooms);
 }
-
+/* When the room been booked will show the already booked words */
 function selectRoom(roomId) {
     if (isRoomBooked(roomId)) {
         alert("This room is already booked!");
@@ -146,7 +154,7 @@ function selectRoom(roomId) {
     showSection('booking-section');
 }
 
-// 提交預訂
+/* Submit Booking and warning if it is already been booked */
 function submitBooking(event) {
     event.preventDefault();
 
@@ -179,7 +187,7 @@ function submitBooking(event) {
     showBookingDetails(newBooking.id);
 }
 
-// 訂購成功頁面 (包含 一鍵複製 + 模擬 Email/SMS 提示)
+/* Booking Successful page including copy booking ID and modal the email/SMS message to guest */
 function showBookingDetails(bookingId) {
     const b = bookings.find(item => item.id === bookingId);
     if (!b) return;
@@ -201,7 +209,7 @@ function showBookingDetails(bookingId) {
             <p style="margin-bottom:8px;"><strong>Total Price:</strong> ${b.price}</p>
             <p style="margin-bottom:16px;"><strong>Status:</strong> <span style="font-weight:bold; color:${b.status === 'Confirmed' ? '#166534' : b.status === 'Pending' ? '#d97706' : '#dc2626'}">${b.status}</span></p>
 
-            <!-- 模擬 Email / 簡訊發送 UI 提示區塊 -->
+            <!-- Modal Email / SMS sending message to guest --> 
             <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:12px; border-radius:6px; font-size:13px; color:#166534;">
                 <p style="margin:0 0 4px 0; font-weight:bold;">✉️ Confirmation Sent!</p>
                 <p style="margin:0; line-height:1.4;">A booking confirmation email has been sent to <strong>${b.email}</strong> and SMS notification to <strong>${b.phone}</strong>. Please save your Booking ID for future search.</p>
@@ -211,7 +219,7 @@ function showBookingDetails(bookingId) {
     showSection('success-section');
 }
 
-// 一鍵複製 Booking ID 函式
+/* Copy Booking ID for guest's order */
 function copyBookingId(id) {
     navigator.clipboard.writeText(id).then(() => {
         alert("Booking ID copied to clipboard: " + id);
@@ -220,7 +228,7 @@ function copyBookingId(id) {
     });
 }
 
-// 渲染 Guest 訂單查詢頁
+/* Guest Finding Order page */
 function renderGuestBookings() {
     const container = document.getElementById('guest-booking-cards');
     const inputId = document.getElementById('search-booking-id');
@@ -233,7 +241,7 @@ function renderGuestBookings() {
     }
 }
 
-// 執行搜尋 (Booking ID + Phone 精準比對)
+/* executive searching for Booking ID + Phone (Compare) */
 function searchGuestBookings() {
     const queryId = document.getElementById('search-booking-id').value.toLowerCase().trim();
     const queryPhone = document.getElementById('search-booking-phone').value.toLowerCase().trim();
@@ -275,6 +283,7 @@ function searchGuestBookings() {
     `).join('');
 }
 
+/* Order cancel by guest */
 function cancelBookingByGuest(bookingId) {
     if (confirm('Are you sure you want to cancel this booking?')) {
         const b = bookings.find(item => item.id === bookingId);
@@ -318,6 +327,7 @@ function renderAdminRoomTypes() {
     }).join('');
 }
 
+/* Admin add new room type */
 function openAddRoomModal() {
     document.getElementById('modal-title').innerText = "Add New Room Type";
     document.getElementById('edit-room-id').value = "";
@@ -345,6 +355,7 @@ function closeAddRoomModal() {
     document.getElementById('add-room-modal').style.display = 'none';
 }
 
+/* Admin edit room type */
 function handleSaveRoomType(event) {
     event.preventDefault();
     const editId = document.getElementById('edit-room-id').value;
@@ -380,6 +391,7 @@ function handleSaveRoomType(event) {
     renderRooms(sampleRooms);
 }
 
+/* Admin delete room type */
 function deleteRoomType(roomId) {
     if (confirm("Are you sure you want to delete this room type?")) {
         sampleRooms = sampleRooms.filter(r => r.id !== roomId);
@@ -388,6 +400,7 @@ function deleteRoomType(roomId) {
     }
 }
 
+/* Admin bookings list shown */
 function renderAdminBookings() {
     const tbody = document.getElementById('admin-booking-list');
     if (!tbody) return;
@@ -418,6 +431,7 @@ function renderAdminBookings() {
     `).join('');
 }
 
+/* Admin update booking status function */
 function updateBookingStatus(bookingId, newStatus) {
     const b = bookings.find(item => item.id === bookingId);
     if (b) {
