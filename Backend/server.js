@@ -7,8 +7,8 @@ require('dotenv').config();
 
 /* build an express servers to application using, name as app */
 const app = express();
-/* using .env file port number priority, if non then using the default setting 5000 */
-const PORT = process.env.PORT || 5000;
+/* using .env file port number priority, if non then using the default setting 80 */
+const PORT = process.env.PORT || 80;
 
 /*Middleware setting */
 app.use(cors()); /* permit the frontend can call the API */

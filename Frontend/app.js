@@ -1,5 +1,5 @@
 /* Room types contents */
-const API_BASE_URL = 'http://localhost:5000/api'; /* Writing in my backend Port API, if it is 3000 then change to 3000 */
+const API_BASE_URL = '/api'; /* Writing in my backend Port API*/
 let sampleRooms = []; /* Initialize sampleRooms as an empty array, should load in dynamically by backend */
 
 /* Add function to request room data from backend */
