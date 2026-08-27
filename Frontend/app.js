@@ -1,14 +1,19 @@
 /* Room types contents */
-let sampleRooms = [
-    { id: 101, name: "Standard Single Room", price: "A$45/per night", description: "Free Wi-Fi, Single Bed, Air Conditioning", tag: "Available", img: "img/Hotel Single Room.jpg" },
-    { id: 102, name: "Double Room", price: "A$90/per night", description: "Free Wi-Fi, Queen Bed, Breakfast included, City View", tag: "Available", img: "img/Double Room.jpg" },
-    { id: 103, name: "Excutive Room", price: "A$120/per night", description: "Free Wi-Fi, King Bed, Ocean View, Free Parking & Breakfast", tag: "Available", img: "img/Excutive Room.jpg" },
-    { id: 104, name: "Standard Single Room", price: "A$45/per night", description: "Free Wi-Fi, Single Bed, Garden View", tag: "Available", img: "img/Single Room2.jpg" },
-    { id: 105, name: "Double Room", price: "A$90/per night", description: "Free Wi-Fi, Double Bed, Work Desk", tag: "Available", img: "img/Double Room2.jpg" },
-    { id: 106, name: "Excutive Room", price: "A$120/per night", description: "Free Wi-Fi, King Bed, Balcony, VIP Lounge Access", tag: "Available", img: "img/Excutive Room2.jpg" }
-];
+const API_BASE_URL = 'http://localhost:5000/api'; /* Writing in my backend Port API, if it is 3000 then change to 3000 */
+let sampleRooms = []; /* Initialize sampleRooms as an empty array, should load in dynamically by backend */
 
-let bookings = [];
+/* Add function to request room data from backend */
+async function loadRoomsFromBackend() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/rooms`);
+        const result = await response.json();
+        /* If the response format is { success: true, data: [...]} */
+        sampleRooms = result.data || result; 
+        renderRooms(sampleRooms);
+    } catch (err) {
+        console.error("Can not load in room data:", err);
+    }
+}
 let currentSelectedRoom = null;
 
 /* Show the Bookings Status */
@@ -155,7 +160,7 @@ function selectRoom(roomId) {
 }
 
 /* Submit Booking and warning if it is already been booked */
-function submitBooking(event) {
+async function submitBooking(event) {
     event.preventDefault();
 
     if (!currentSelectedRoom || isRoomBooked(currentSelectedRoom.id)) {
@@ -165,26 +170,55 @@ function submitBooking(event) {
         return;
     }
 
-    const newBooking = {
-        id: 'BK-' + Date.now().toString().slice(-4),
+    /* The data format prepare to send to the backend */
+    const bookingPayload = {
         roomId: currentSelectedRoom.id,
-        guest: document.getElementById('guest-name').value,
+        guestName: document.getElementById('guest-name').value,
         email: document.getElementById('guest-email').value,
         phone: document.getElementById('guest-phone').value,
-        room: currentSelectedRoom.name,
-        price: currentSelectedRoom.price,
-        img: currentSelectedRoom.img,
-        status: 'Pending'
+        checkIn: "2026-09-01",  /* Compare to the real field */
+        checkOut: "2026-09-05"
     };
-    
-    bookings.push(newBooking);
 
-    document.getElementById('guest-name').value = '';
-    document.getElementById('guest-email').value = '';
-    document.getElementById('guest-phone').value = '';
+    try {
+        /* Send POST to request to the backend Booking Service */
+        const response = await fetch(`${API_BASE_URL}/bookings`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(bookingPayload)
+        });
 
-    renderRooms(sampleRooms);
-    showBookingDetails(newBooking.id);
+        const result = await response.json();
+
+        if (response.ok) {
+            /* When the backend save successfully, synchronize update the frontend display bookings */
+            const newBooking = {
+                id: 'BK-' + (result.booking?.id || Date.now().toString().slice(-4)),
+                roomId: currentSelectedRoom.id,
+                guest: bookingPayload.guestName,
+                email: bookingPayload.email,
+                phone: bookingPayload.phone,
+                room: currentSelectedRoom.name,
+                price: currentSelectedRoom.price,
+                img: currentSelectedRoom.img,
+                status: 'Pending'
+            };
+
+            bookings.push(newBooking);
+
+            document.getElementById('guest-name').value = '';
+            document.getElementById('guest-email').value = '';
+            document.getElementById('guest-phone').value = '';
+
+            renderRooms(sampleRooms);
+            showBookingDetails(newBooking.id);
+        } else {
+            alert(result.message || "Booking failed! Please try again.");
+        }
+    } catch (error) {
+        console.error("Linking error:", error);
+        alert("Can not connect to the backend server!");
+    }
 }
 
 /* Booking Successful page including copy booking ID and modal the email/SMS message to guest */
@@ -397,7 +431,7 @@ function deleteRoomType(roomId) {
         sampleRooms = sampleRooms.filter(r => r.id !== roomId);
         renderAdminRoomTypes();
         renderRooms(sampleRooms);
-    }
+    }   
 }
 
 /* Admin bookings list shown */
@@ -441,4 +475,5 @@ function updateBookingStatus(bookingId, newStatus) {
     }
 }
 
-renderRooms(sampleRooms);
+/* If webpage is loaded, execute this */
+document.addEventListener('DOMContentLoaded', loadRoomsFromBackend);
