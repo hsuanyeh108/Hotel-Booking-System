@@ -1,34 +1,57 @@
-/* Room types contents */
-const API_BASE_URL = '/api'; /* Writing in my backend Port API*/
-let sampleRooms = []; /* Initialize sampleRooms as an empty array, should load in dynamically by backend */
+/*Room types and card content*/
+let sampleRooms = [
+    { id: 101, name: "Standard Single Room", price: "A$45/per night", description: "Free Wi-Fi, Single Bed, Air Conditioning", tag: "Available", img: "img/Hotel Single Room.jpg" },
+    { id: 102, name: "Double Room", price: "A$90/per night", description: "Free Wi-Fi, Queen Bed, Breakfast included, City View", tag: "Available", img: "img/Double Room.jpg" },
+    { id: 103, name: "Excutive Room", price: "A$120/per night", description: "Free Wi-Fi, King Bed, Ocean View, Free Parking & Breakfast", tag: "Available", img: "img/Excutive Room.jpg" },
+    { id: 104, name: "Standard Single Room", price: "A$45/per night", description: "Free Wi-Fi, Single Bed, Garden View", tag: "Available", img: "img/Single Room2.jpg" },
+    { id: 105, name: "Double Room", price: "A$90/per night", description: "Free Wi-Fi, Double Bed, Work Desk", tag: "Available", img: "img/Double Room2.jpg" },
+    { id: 106, name: "Excutive Room", price: "A$120/per night", description: "Free Wi-Fi, King Bed, Balcony, VIP Lounge Access", tag: "Available", img: "img/Excutive Room2.jpg" }
+];
 
-/* Add function to request room data from backend */
-async function loadRoomsFromBackend() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/rooms`);
-        const result = await response.json();
-        /* If the response format is { success: true, data: [...]} */
-        sampleRooms = result.data || result; 
-        renderRooms(sampleRooms);
-    } catch (err) {
-        console.error("Can not load in room data:", err);
-    }
-}
+let bookings = [];
 let currentSelectedRoom = null;
+/*Store the dates selected by the guest*/
+let selectedCheckIn = '';
+let selectedCheckOut = '';
 
-/* Show the Bookings Status */
-function isRoomBooked(roomId) {
-    return bookings.some(b => b.roomId === roomId && (b.status === 'Confirmed' || b.status === 'Pending'));
+/*Checking the date is booked or not*/
+function isRoomBooked(roomId, checkIn, checkOut) {
+
+    /*If guest has not selected dates yet,do not mark the room as unavailable*/
+    if (!checkIn || !checkOut) {
+        return false;
+    }
+
+    const selectedStart = new Date(checkIn);
+    const selectedEnd = new Date(checkOut);
+
+    return bookings.some(b => {
+
+        /*Only check the same room*/
+        if (b.roomId !== roomId) {
+            return false;
+        }
+
+        /*Cancelled bookings do not block the room*/
+        if (b.status !== 'Confirmed' && b.status !== 'Pending') {
+            return false;
+        }
+
+        /*Existing booking dates*/
+        const existingStart = new Date(b.checkIn);
+        const existingEnd = new Date(b.checkOut);
+
+        /*Check whether the two booking periods overlap*/
+        return selectedStart < existingEnd && selectedEnd > existingStart;
+    });
 }
 
-/* Admin management page for delete or add room types */
 function showSection(sectionId) {
     document.querySelectorAll('main > section').forEach(sec => {
         sec.classList.remove('active-section');
         sec.classList.add('hidden-section');
     });
 
-    /* If booking cancel by guest, the Admin manage page will delete the order instantly */
     const targetSection = document.getElementById(sectionId);
     if (targetSection) {
         targetSection.classList.remove('hidden-section');
@@ -46,25 +69,30 @@ function showSection(sectionId) {
     }
 }
 
-/* Admin login page warning windows */
+/*Admin Login page*/
 function handleAdminLogin(event) {
     event.preventDefault();
     showSection('admin-home-section');
 }
 
+/*Admin register page*/
 function handleAdminRegister(event) {
     event.preventDefault();
     alert('Account created successfully!');
     showSection('admin-login-section');
 }
 
-/* The room cards should shown the active status */
+/*Room list*/
 function renderRooms(roomsToRender) {
     const list = document.getElementById('room-list');
     if (!list) return;
 
     list.innerHTML = roomsToRender.map(room => {
-        const booked = isRoomBooked(room.id);
+        const booked = isRoomBooked(
+            room.id,
+            selectedCheckIn,
+            selectedCheckOut
+        );
         const tagText = booked ? "Non-available" : "Available";
         const tagBg = booked ? "#fee2e2" : "#dcfce7";
         const tagColor = booked ? "#dc2626" : "#15803d";
@@ -86,53 +114,113 @@ function renderRooms(roomsToRender) {
     }).join('');
 }
 
-/* Search function for calendar checkin /  checkout dates */
+/*Room filter*/
 function filterRooms() {
+
     const searchInput = document.getElementById('global-search');
     if (!searchInput) return;
-
     const query = searchInput.value.toLowerCase().trim();
-    const filtered = sampleRooms.filter(r => 
-        r.name.toLowerCase().includes(query) || 
-        (r.description && r.description.toLowerCase().includes(query))
-    );
+    const filtered = sampleRooms.filter(room => {
+
+        /*Check room name / description*/
+        const matchesSearch =
+            room.name.toLowerCase().includes(query) ||
+            (room.description &&
+             room.description.toLowerCase().includes(query));
+
+        /*Check whether the room is available for selected dates*/
+        const availableForDates =
+            !isRoomBooked(
+                room.id,
+                selectedCheckIn,
+                selectedCheckOut
+            );
+        return matchesSearch && availableForDates;
+    });
+
     renderRooms(filtered);
 }
 
-/* Check the logic of checkin and checkout dates, checkout date should be later than checkin date */
+/*Room search by navbar*/
+function searchRoomsByNavbar() {
+
+    /*Go to Search Rooms section*/
+    showSection('search-section');
+
+    /*Get the room name entered in the navbar search bar*/
+    const searchInput = document.getElementById('global-search');
+
+    if (!searchInput) return;
+
+    const query = searchInput.value.toLowerCase().trim();
+
+    /*Filter by room name/description*/
+    const filtered = sampleRooms.filter(room => {
+
+        const matchesSearch =
+            room.name.toLowerCase().includes(query) ||
+            (room.description &&
+             room.description.toLowerCase().includes(query));
+
+        /*Filter by selected check-in / check-out dates*/
+        const availableForDates =
+            !isRoomBooked(
+                room.id,
+                selectedCheckIn,
+                selectedCheckOut
+            );
+
+        return matchesSearch && availableForDates;
+    });
+
+    renderRooms(filtered);
+}
+
+/*Room search checkin and checkout dates*/
 function searchRooms() {
+
     const checkinElem = document.getElementById('checkin');
     const checkoutElem = document.getElementById('checkout');
 
     const checkinInput = checkinElem ? checkinElem.value : '';
     const checkoutInput = checkoutElem ? checkoutElem.value : '';
 
-    if (checkinInput && checkoutInput) {
-        const checkinDate = new Date(checkinInput);
-        const checkoutDate = new Date(checkoutInput);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        if (checkinDate < today) {
-            alert("Check-in date cannot be in the past!");
-            return;
-        }
-
-        if (checkoutDate <= checkinDate) {
-            alert("Check-out date must be later than Check-in date!");
-            return;
-        }
-    } else if (checkinInput || checkoutInput) {
+    if (!checkinInput || !checkoutInput) {
         alert("Please select both Check-in and Check-out dates!");
         return;
     }
 
+    const checkinDate = new Date(checkinInput);
+    const checkoutDate = new Date(checkoutInput);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    /*Check-in cannot be in the past*/
+    if (checkinDate < today) {
+        alert("Check-in date cannot be in the past!");
+        return;
+    }
+
+    /*Check-out must be later than check-in*/
+    if (checkoutDate <= checkinDate) {
+        alert("Check-out date must be later than Check-in date!");
+        return;
+    }
+
+    /*Save the selected dates*/
+    selectedCheckIn = checkinInput;
+    selectedCheckOut = checkoutInput;
+
+    /*Render rooms according to the selected dates*/
     renderRooms(sampleRooms);
 }
-/* When the room been booked will show the already booked words */
+
+/*Room seletion*/
 function selectRoom(roomId) {
-    if (isRoomBooked(roomId)) {
-        alert("This room is already booked!");
+
+    if (isRoomBooked(roomId, selectedCheckIn, selectedCheckOut)) {
+        alert("This room is already booked for the selected dates!");
         renderRooms(sampleRooms);
         return;
     }
@@ -159,69 +247,64 @@ function selectRoom(roomId) {
     showSection('booking-section');
 }
 
-/* Submit Booking and warning if it is already been booked */
-async function submitBooking(event) {
+/*Submit booking form*/
+function submitBooking(event) {
     event.preventDefault();
 
-    if (!currentSelectedRoom || isRoomBooked(currentSelectedRoom.id)) {
-        alert("Sorry, this room is no longer available!");
+    /*Check whether dates have been selected*/
+    if (!selectedCheckIn || !selectedCheckOut) {
+        alert("Please select Check-in and Check-out dates first!");
+        showSection('search-section');
+        return;
+    }
+
+    /*Check again before creating the booking*/
+    /*This prevents double booking for the same dates*/
+    if (
+        !currentSelectedRoom ||
+        isRoomBooked(
+            currentSelectedRoom.id,
+            selectedCheckIn,
+            selectedCheckOut
+        )
+    ) {
+        alert("Sorry, this room is no longer available for the selected dates!");
         renderRooms(sampleRooms);
         showSection('search-section');
         return;
     }
 
-    /* The data format prepare to send to the backend */
-    const bookingPayload = {
+    const newBooking = {
+        id: 'BK-' + Date.now().toString().slice(-4),
+
         roomId: currentSelectedRoom.id,
-        guestName: document.getElementById('guest-name').value,
+
+        guest: document.getElementById('guest-name').value,
         email: document.getElementById('guest-email').value,
         phone: document.getElementById('guest-phone').value,
-        checkIn: "2026-09-01",  /* Compare to the real field */
-        checkOut: "2026-09-05"
+
+        room: currentSelectedRoom.name,
+        price: currentSelectedRoom.price,
+        img: currentSelectedRoom.img,
+
+        // Save the booking dates
+        checkIn: selectedCheckIn,
+        checkOut: selectedCheckOut,
+
+        status: 'Pending'
     };
 
-    try {
-        /* Send POST to request to the backend Booking Service */
-        const response = await fetch(`${API_BASE_URL}/bookings`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(bookingPayload)
-        });
+    bookings.push(newBooking);
 
-        const result = await response.json();
+    document.getElementById('guest-name').value = '';
+    document.getElementById('guest-email').value = '';
+    document.getElementById('guest-phone').value = '';
 
-        if (response.ok) {
-            /* When the backend save successfully, synchronize update the frontend display bookings */
-            const newBooking = {
-                id: 'BK-' + (result.booking?.id || Date.now().toString().slice(-4)),
-                roomId: currentSelectedRoom.id,
-                guest: bookingPayload.guestName,
-                email: bookingPayload.email,
-                phone: bookingPayload.phone,
-                room: currentSelectedRoom.name,
-                price: currentSelectedRoom.price,
-                img: currentSelectedRoom.img,
-                status: 'Pending'
-            };
-
-            bookings.push(newBooking);
-
-            document.getElementById('guest-name').value = '';
-            document.getElementById('guest-email').value = '';
-            document.getElementById('guest-phone').value = '';
-
-            renderRooms(sampleRooms);
-            showBookingDetails(newBooking.id);
-        } else {
-            alert(result.message || "Booking failed! Please try again.");
-        }
-    } catch (error) {
-        console.error("Linking error:", error);
-        alert("Can not connect to the backend server!");
-    }
+    renderRooms(sampleRooms);
+    showBookingDetails(newBooking.id);
 }
 
-/* Booking Successful page including copy booking ID and modal the email/SMS message to guest */
+/*Booking Successful page, including CopyID button and modal to send message to email/ SMS to phone*/
 function showBookingDetails(bookingId) {
     const b = bookings.find(item => item.id === bookingId);
     if (!b) return;
@@ -243,7 +326,7 @@ function showBookingDetails(bookingId) {
             <p style="margin-bottom:8px;"><strong>Total Price:</strong> ${b.price}</p>
             <p style="margin-bottom:16px;"><strong>Status:</strong> <span style="font-weight:bold; color:${b.status === 'Confirmed' ? '#166534' : b.status === 'Pending' ? '#d97706' : '#dc2626'}">${b.status}</span></p>
 
-            <!-- Modal Email / SMS sending message to guest --> 
+            <!-- modal for Email / SMS to phone-->
             <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:12px; border-radius:6px; font-size:13px; color:#166534;">
                 <p style="margin:0 0 4px 0; font-weight:bold;">✉️ Confirmation Sent!</p>
                 <p style="margin:0; line-height:1.4;">A booking confirmation email has been sent to <strong>${b.email}</strong> and SMS notification to <strong>${b.phone}</strong>. Please save your Booking ID for future search.</p>
@@ -253,7 +336,7 @@ function showBookingDetails(bookingId) {
     showSection('success-section');
 }
 
-/* Copy Booking ID for guest's order */
+/* One button to copy Booking ID*/
 function copyBookingId(id) {
     navigator.clipboard.writeText(id).then(() => {
         alert("Booking ID copied to clipboard: " + id);
@@ -262,7 +345,7 @@ function copyBookingId(id) {
     });
 }
 
-/* Guest Finding Order page */
+/*Guest Booking Finding page*/
 function renderGuestBookings() {
     const container = document.getElementById('guest-booking-cards');
     const inputId = document.getElementById('search-booking-id');
@@ -275,7 +358,7 @@ function renderGuestBookings() {
     }
 }
 
-/* executive searching for Booking ID + Phone (Compare) */
+/* Excute searching(Booking ID + Phone compare)*/
 function searchGuestBookings() {
     const queryId = document.getElementById('search-booking-id').value.toLowerCase().trim();
     const queryPhone = document.getElementById('search-booking-phone').value.toLowerCase().trim();
@@ -317,7 +400,7 @@ function searchGuestBookings() {
     `).join('');
 }
 
-/* Order cancel by guest */
+/*Cancel booking order*/
 function cancelBookingByGuest(bookingId) {
     if (confirm('Are you sure you want to cancel this booking?')) {
         const b = bookings.find(item => item.id === bookingId);
@@ -329,6 +412,7 @@ function cancelBookingByGuest(bookingId) {
     }
 }
 
+/*Admin room types page*/
 function renderAdminRoomTypes() {
     const container = document.getElementById('admin-room-type-grid');
     if (!container) return;
@@ -338,7 +422,7 @@ function renderAdminRoomTypes() {
         return;
     }
     container.innerHTML = sampleRooms.map(room => {
-        const booked = isRoomBooked(room.id);
+        const booked = false;
         const tagText = booked ? "Non-available" : "Available";
         const tagBg = booked ? "#fee2e2" : "#dcfce7";
         const tagColor = booked ? "#dc2626" : "#15803d";
@@ -361,7 +445,7 @@ function renderAdminRoomTypes() {
     }).join('');
 }
 
-/* Admin add new room type */
+/*Room types page add function*/
 function openAddRoomModal() {
     document.getElementById('modal-title').innerText = "Add New Room Type";
     document.getElementById('edit-room-id').value = "";
@@ -389,7 +473,6 @@ function closeAddRoomModal() {
     document.getElementById('add-room-modal').style.display = 'none';
 }
 
-/* Admin edit room type */
 function handleSaveRoomType(event) {
     event.preventDefault();
     const editId = document.getElementById('edit-room-id').value;
@@ -425,16 +508,15 @@ function handleSaveRoomType(event) {
     renderRooms(sampleRooms);
 }
 
-/* Admin delete room type */
+/*Room type page delete function*/
 function deleteRoomType(roomId) {
     if (confirm("Are you sure you want to delete this room type?")) {
         sampleRooms = sampleRooms.filter(r => r.id !== roomId);
         renderAdminRoomTypes();
         renderRooms(sampleRooms);
-    }   
+    }
 }
 
-/* Admin bookings list shown */
 function renderAdminBookings() {
     const tbody = document.getElementById('admin-booking-list');
     if (!tbody) return;
@@ -451,6 +533,9 @@ function renderAdminBookings() {
             <td style="padding:12px;">${b.guest}</td>
             <td style="padding:12px;">${b.room}</td>
             <td style="padding:12px;">
+                ${b.checkIn} → ${b.checkOut}
+            </td>
+            <td style="padding:12px;">
                 <select onchange="updateBookingStatus('${b.id}', this.value)" style="padding:4px 8px; border-radius:4px; border:1px solid #cbd5e1;">
                     <option value="Pending" ${b.status === 'Pending' ? 'selected' : ''}>Pending</option>
                     <option value="Confirmed" ${b.status === 'Confirmed' ? 'selected' : ''}>Confirmed</option>
@@ -465,7 +550,7 @@ function renderAdminBookings() {
     `).join('');
 }
 
-/* Admin update booking status function */
+/*Room type page update*/
 function updateBookingStatus(bookingId, newStatus) {
     const b = bookings.find(item => item.id === bookingId);
     if (b) {
@@ -475,5 +560,4 @@ function updateBookingStatus(bookingId, newStatus) {
     }
 }
 
-/* If webpage is loaded, execute this */
-document.addEventListener('DOMContentLoaded', loadRoomsFromBackend);
+renderRooms(sampleRooms);

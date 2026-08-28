@@ -1,28 +1,22 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
 /*Whole page background and setting*/
 * { box-sizing: border-box; font-family: 'Inter', sans-serif; margin: 0; padding: 0; }
 body { background-color: #F8FAFC; color: #1E293B; padding: 24px 40px; }
-
 /*Header Navbar*/
 header { display: flex; justify-content: space-between; align-items: center; background: #FFFFFF; padding: 16px 32px; border-radius: 8px; border: 1px solid #E2E8F0; box-shadow: 0px 2px 4px rgba(0,0,0,0.04); margin-bottom: 24px; }
 header h1 { font-size: 20px; font-weight: 700; color: #0F172A; }
-
 /*Header Searching*/
 .header-search { flex: 1; max-width: 400px; margin: 0 20px; }
 .header-search input { width: 100%; padding: 8px 16px; border: 1px solid #CBD5E1; border-radius: 20px; outline: none; font-size: 14px; background: #F8FAFC; }
 .header-search input:focus { border-color: #1E3A8A; background: #FFF; }
-
 /*Different Button on the header*/
 nav button { padding: 9px 18px; margin-left: 10px; border: 1px solid #CBD5E1; background: #FFFFFF; color: #334155; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; }
 nav button:hover { background: #F1F5F9; }
-
 /* Searching by checkin / checkout date the filter area */
 .search-box { background: #FFFFFF; padding: 20px 24px; border-radius: 8px; border: 1px solid #E2E8F0; margin-bottom: 24px; display: flex; gap: 20px; align-items: flex-end; }
 .search-box label { display: flex; flex-direction: column; gap: 6px; font-weight: 500; font-size: 13px; color: #475569; }
 .search-box input { padding: 8px 12px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 14px; outline: none; }
 .search-box button { background: #1E3A8A; color: #FFFFFF; border: none; padding: 9px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; }
-
 /* Home Page room type cards grid */
 .room-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
 .room-card { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 20px; box-shadow: 0px 2px 4px rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: space-between; }
@@ -30,10 +24,8 @@ nav button:hover { background: #F1F5F9; }
 .room-card .price { font-size: 16px; font-weight: 700; color: #1E3A8A; margin-bottom: 16px; }
 .room-card .tag { display: inline-block; background: #DCFCE7; color: #15803D; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-bottom: 10px; width: fit-content; }
 .room-card button { background: #1E3A8A; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; width: 100%; }
-
 .hidden-section { display: none; }
 .active-section { display: block; }
-
 /* Admin Login & Dashboard */
 .login-card { background: white; padding: 30px; border-radius: 8px; border: 1px solid #E2E8F0; max-width: 400px; margin: 40px auto; }
 .admin-dashboard-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; max-width: 700px; }
@@ -43,10 +35,8 @@ nav button:hover { background: #F1F5F9; }
 .dashboard-info { display: flex; flex-direction: column; gap: 10px; flex: 1; }
 .dashboard-info .count { font-size: 32px; font-weight: bold; color: #1E3A8A; text-align: center; }
 .dashboard-info button { background: #1E3A8A; color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-weight: 600; }
-
 form label { display: block; margin: 14px 0; font-weight: 500; font-size: 14px; }
 form input { width: 100%; padding: 10px; border: 1px solid #CBD5E1; border-radius: 6px; margin-top: 6px; font-size: 14px; }
 form button { background: #1E3A8A; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
-
 .status-confirm { color: #166534; font-weight: bold; }
 .status-cancelled { color: #DC2626; font-weight: bold; }

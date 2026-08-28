@@ -7,24 +7,21 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
     <!--Header Navbar-->
     <header>
         <h1>Hotel Booking System</h1>
         
         <!--Search Navbar searching by room types name-->
         <div class="header-search">
-            <input type="text" id="global-search" placeholder="Search rooms..." oninput="filterRooms()">
+            <input type="text" id="global-search" placeholder="Search rooms...">
         </div>
-
         <!--Header button for different user roles / Guest & Admin-->
         <nav>
-            <button onclick="showSection('search-section')">Search Rooms</button>
+            <button onclick="searchRoomsByNavbar()">Search Rooms</button>
             <button onclick="showSection('guest-booking-list-section')">Guest Booking List</button>
             <button onclick="showSection('admin-login-section')">Admin Dashboard</button>
         </nav>
     </header>
-
     <main>
         <!-- 01_Guest Search Room by calendar dates & Search rooms button -->
         <section id="search-section" class="active-section">
@@ -41,11 +38,9 @@
                 </label>
                 <button onclick="searchRooms()">Search Rooms</button>
             </div>
-
             <!--Room card grid-->
             <div id="room-list" class="room-grid"></div>
         </section>
-
         <!-- 02_Guest Booking Form -->
         <section id="booking-section" class="hidden-section">
             <h2 style="margin-bottom: 20px;">Complete Your Booking</h2>
@@ -53,35 +48,29 @@
             <form id="booking-form" onsubmit="submitBooking(event)" style="background: white; padding: 24px; border-radius: 8px; border: 1px solid #E2E8F0; margin-bottom: 24px;">
                 <p style="margin-bottom: 10px;"><strong>Selected Room:</strong> <span id="selected-room-name">-</span></p>
                 <p style="margin-bottom: 20px;"><strong>Price:</strong> <span id="selected-room-price" style="color: #1E3A8A; font-weight: bold;">-</span></p>
-
                 <!--Booking Form with filling your own information-->
                 <label>
                     Full Name:
                     <input type="text" id="guest-name" required placeholder="Enter your full name">
                 </label>
-
                 <label>
                     Email Address:
                     <input type="email" id="guest-email" required placeholder="Enter your email">
                 </label>
-
                 <label>
                     Phone Number:
                     <input type="tel" id="guest-phone" required placeholder="Enter your phone number">
                 </label>
-
                 <!--Booking Form confirm booking button-->
                 <div style="margin-top: 20px; display: flex; gap: 12px;">
                     <button type="submit">Confirm Booking</button>
                     <button type="button" style="background: #64748B;" onclick="showSection('search-section')">Cancel</button>
                 </div>
             </form>
-
             <!--Booking order will shown after clicking booking confirm-->
             <h3 style="margin-bottom: 12px; font-size: 18px;">Selected Room Preview</h3>
             <div id="selected-room-card-preview" style="max-width: 400px;"></div>
         </section>
-
         <!-- 03_Guest Finding Order using Guest(Booking ID + Phone) -->
         <section id="guest-booking-list-section" class="hidden-section">
             <h2 style="margin-bottom: 16px;">Find My Booking</h2>
@@ -92,11 +81,9 @@
                 <input type="text" id="search-booking-phone" placeholder="Phone Number" style="flex: 1; min-width: 200px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
                 <button onclick="searchGuestBookings()" style="background: #1E3A8A; color: white; border: none; padding: 10px 24px; border-radius: 6px; cursor: pointer; font-weight: bold;">Search</button>
             </div>
-
             <!-- Guest's booking order card shown -->
             <div id="guest-booking-cards" class="room-grid"></div>
         </section>
-
         <!-- 04_Guest Booking Success page -->
         <section id="success-section" class="hidden-section">
             <div style="background: #1E3A8A; color: white; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; font-size: 18px; margin-bottom: 20px;">
@@ -106,7 +93,6 @@
             <div id="success-details"></div>
             <button style="background: #1E3A8A; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;" onclick="showSection('search-section')">Back to Search</button>
         </section>
-
         <!-- 05_Admin Login Page -->
         <section id="admin-login-section" class="hidden-section">
             <div class="login-card">
@@ -122,7 +108,6 @@
                     </label>
                     <button type="submit" style="width: 100%; margin-top: 15px;">Log In</button>
                 </form>
-
                 <!-- Admin Login Page external systems to login-->
                 <div style="display:flex; justify-content:center; gap:8px; margin-top:20px; margin-bottom:16px;">
                     <button type="button" title="Desktop" style="background:#F8FAFC; border:1px solid #CBD5E1; padding:6px 12px; border-radius:6px; cursor:pointer; display:flex; align-items:center;">
@@ -145,7 +130,6 @@
                         </svg>
                     </button>
                 </div>
-
                 <!-- Admin Login Page if don't have an account, for register page button-->
                 <p style="text-align:center; font-size:14px; color:#64748B; margin:0;">
                     Don't have an account? 
@@ -153,7 +137,6 @@
                 </p>
             </div>
         </section>
-
         <!-- 06_Admin Register Page to fill in information -->
         <section id="admin-register-section" class="hidden-section">
             <div class="login-card">
@@ -170,7 +153,6 @@
                     </label>
                     <button type="submit" style="width: 100%; margin-top: 15px; background:#166534;">Create Account</button>
                 </form>
-
                 <!-- Admin Register Page, if already have an account, click on and get back to login page -->
                 <p style="text-align:center; margin-top:16px; font-size:14px; color:#64748B;">
                     Already have an account? 
@@ -178,7 +160,6 @@
                 </p>
             </div>
         </section>
-
         <!-- 07_Admin Home Page, showing booking order and room types listings cards grid  -->
         <section id="admin-home-section" class="hidden-section">
             <h2 style="margin-bottom: 20px;">Admin Dashboard</h2>
@@ -199,7 +180,6 @@
                 </div>
             </div>
         </section>
-
         <!-- 08_Admin Room Type Listings page-->
         <section id="admin-room-types-section" class="hidden-section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
@@ -209,11 +189,9 @@
                     <button onclick="showSection('admin-home-section')" style="background: #64748b; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer;">Back to Dashboard</button>
                 </div>
             </div>
-
             <!-- Admin Room types cards area -->
             <div id="admin-room-type-grid" class="room-grid"></div>
         </section>
-
         <!-- Adding and modify the room types pop up windows(Modal) -->
         <div id="add-room-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;">
             <div style="background: white; padding: 24px; border-radius: 8px; width: 100%; max-width: 450px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
@@ -245,14 +223,12 @@
                 </form>
             </div>
         </div>
-
         <!-- 09_Admin Manage Bookings page-->
         <section id="admin-manage-section" class="hidden-section">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
                 <h2>Admin - Manage Bookings</h2>
                 <button style="background:#64748B; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;" onclick="showSection('admin-home-section')">Back to Dashboard</button>
             </div>
-
             <!-- Admin Manage Bookings page shown the guest's order and information-->
             <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; border: 1px solid #E2E8F0;">
                 <thead>
@@ -260,6 +236,7 @@
                         <th style="padding: 12px;">Booking ID</th>
                         <th style="padding: 12px;">Guest Name</th>
                         <th style="padding: 12px;">Room Type</th>
+                        <th style="padding: 12px;">Check-in / Check-out</th>
                         <th style="padding: 12px;">Status</th>
                         <th style="padding: 12px;">Action</th>
                     </tr>
@@ -268,7 +245,6 @@
             </table>
         </section>
     </main>
-
     <script src="app.js"></script>
 </body>
 </html>
