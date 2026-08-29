@@ -61,7 +61,7 @@ app.get('/api/rooms', (req, res) => {
 /* Frontend sent Submit Booking details to Booking Server to execute Validate or Insert Booking, and return Booking saved or Booking Confirmed*/
 /*POST /api/bookings */
 app.post('/api/bookings', (req, res) => {
-  const { guestName, roomId, checkIn, checkOut } = req.body;/* Frontend sent the content of guestname, roomID, checkin and checkout dates */
+  const { guestName, roomId, checkIn, checkOut, phone, email } = req.body;/* Frontend sent the content of guestname, roomID, checkin and checkout dates */
  /* Simple validate to the data authorization, if something missing will sent HTTP 400 error message*/
   if (!guestName || !roomId || !checkIn || !checkOut) {
     return res.status(400).json({ success: false, message: 'Please fill in the completed booking information!' });
@@ -82,14 +82,23 @@ app.post('/api/bookings', (req, res) => {
   }
 
   /* Modal Insert Booking write into database */
-  const newBooking = {
-    id: bookings.length + 1,
-    guestName,
-    roomId,
-    checkIn,
-    checkOut,
-    createdAt: new Date()
-  };
+    const room = rooms.find(r => r.id === Number(roomId));
+
+    const newBooking = {
+        id: bookings.length + 1,
+        guest: guestName,
+        phone,
+        email,
+        room: room ? room.name : 'Unknown Room',
+        price: room ? room.price : '',
+        img: room ? room.img : 'img/Hotel Single Room.jpg',
+        roomId: Number(roomId),
+        checkIn,
+        checkOut,
+        status: 'Pending',
+        createdAt: new Date()
+    };
+    
   bookings.push(newBooking);
   /* Booking Confirmed stage, return HTTP 201 and the message and information when booking successful */
   res.status(201).json({
@@ -98,6 +107,90 @@ app.post('/api/bookings', (req, res) => {
     booking: newBooking
   });
 });
+
+/*Admin APIs*/
+/* GET /api/bookings - Admin view all orders*/
+app.get('/api/bookings', (req, res) => {
+  res.json({ success: true, data: bookings });
+});
+
+/* PATCH /api/bookings/:id/status - Admin confirm or cancel orders */
+app.patch('/api/bookings/:id/status', (req, res) => {
+  const bookingId = Number(req.params.id);
+  const { status } = req.body;
+
+  const validStatuses = ['Pending', 'Confirmed', 'Cancelled by Admin', 'Cancelled by Guest'];
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({ success: false, message: 'Invalid status value' });
+  }
+
+  const booking = bookings.find(b => b.id === bookingId);
+  if (!booking) {
+    return res.status(404).json({ success: false, message: 'Booking not found' });
+  }
+
+  booking.status = status;
+  res.json({ success: true, message: 'Booking status updated', booking });
+});
+
+/* POST /api/rooms - Admin add room types */
+app.post('/api/rooms', (req, res) => {
+  const { name, price, description, img } = req.body;
+
+  if (!name || !price) {
+    return res.status(400).json({ success: false, message: 'Room name and price are required' });
+  }
+
+  const newRoom = {
+    id: Date.now(),
+    name,
+    price,
+    description: description || '',
+    img: img || 'img/Hotel Single Room.jpg'
+  };
+  rooms.push(newRoom);
+
+  res.status(201).json({ success: true, message: 'Room type added', room: newRoom });
+});
+
+/* PUT /api/rooms/:id - Admin update room types */
+app.put('/api/rooms/:id', (req, res) => {
+  const roomId = Number(req.params.id);
+  const room = rooms.find(r => r.id === roomId);
+
+  if (!room) {
+    return res.status(404).json({ success: false, message: 'Room type not found' });
+  }
+
+  const { name, price, description, img } = req.body;
+  if (name) room.name = name;
+  if (price) room.price = price;
+  if (description !== undefined) room.description = description;
+  if (img) room.img = img;
+
+  res.json({ success: true, message: 'Room type updated', room });
+});
+
+/* DELETE /api/rooms/:id - Admin delete room types */
+app.delete('/api/rooms/:id', (req, res) => {
+  const roomId = Number(req.params.id);
+
+  const hasActiveBooking = bookings.some(b =>
+    b.roomId === roomId && (b.status === 'Pending' || b.status === 'Confirmed')
+  );
+  if (hasActiveBooking) {
+    return res.status(400).json({ success: false, message: 'Cannot delete a room type with active bookings' });
+  }
+
+  const index = rooms.findIndex(r => r.id === roomId);
+  if (index === -1) {
+    return res.status(404).json({ success: false, message: 'Room type not found' });
+  }
+
+  rooms.splice(index, 1);
+  res.json({ success: true, message: 'Room type deleted' });
+});
+
 /* Server started in the port and listen to the demand, if successfully start will print the words in the terminal */
 app.listen(PORT, () => {
   console.log(`Booking Service are operating on Port ${PORT}...`);
