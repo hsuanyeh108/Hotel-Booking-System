@@ -1,12 +1,28 @@
 /*Room types and card content*/
-let sampleRooms = [
-    { id: 101, name: "Standard Single Room", price: "A$45/per night", description: "Free Wi-Fi, Single Bed, Air Conditioning", tag: "Available", img: "img/Hotel Single Room.jpg" },
-    { id: 102, name: "Double Room", price: "A$90/per night", description: "Free Wi-Fi, Queen Bed, Breakfast included, City View", tag: "Available", img: "img/Double Room.jpg" },
-    { id: 103, name: "Excutive Room", price: "A$120/per night", description: "Free Wi-Fi, King Bed, Ocean View, Free Parking & Breakfast", tag: "Available", img: "img/Excutive Room.jpg" },
-    { id: 104, name: "Standard Single Room", price: "A$45/per night", description: "Free Wi-Fi, Single Bed, Garden View", tag: "Available", img: "img/Single Room2.jpg" },
-    { id: 105, name: "Double Room", price: "A$90/per night", description: "Free Wi-Fi, Double Bed, Work Desk", tag: "Available", img: "img/Double Room2.jpg" },
-    { id: 106, name: "Excutive Room", price: "A$120/per night", description: "Free Wi-Fi, King Bed, Balcony, VIP Lounge Access", tag: "Available", img: "img/Excutive Room2.jpg" }
-];
+const API_BASE_URL = '/api';
+let sampleRooms = [];
+
+async function loadRoomsFromBackend() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/rooms`);
+        const result = await response.json();
+        sampleRooms = result.data || [];
+        renderRooms(sampleRooms);
+    } catch (err) {
+        console.error("Cannot load rooms from backend:", err);
+    }
+}
+
+async function loadRoomsWithDates(checkIn, checkOut) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/rooms?checkIn=${checkIn}&checkOut=${checkOut}`);
+        const result = await response.json();
+        sampleRooms = result.data || [];
+        renderRooms(sampleRooms);
+    } catch (err) {
+        console.error("Cannot load rooms:", err);
+    }
+}
 
 let bookings = [];
 let currentSelectedRoom = null;
@@ -212,8 +228,8 @@ function searchRooms() {
     selectedCheckIn = checkinInput;
     selectedCheckOut = checkoutInput;
 
-    /*Render rooms according to the selected dates*/
-    renderRooms(sampleRooms);
+    /*Send dates to backend to get rooms filtered by availability*/
+    loadRoomsWithDates(selectedCheckIn, selectedCheckOut);
 }
 
 /*Room seletion*/
@@ -248,60 +264,64 @@ function selectRoom(roomId) {
 }
 
 /*Submit booking form*/
-function submitBooking(event) {
+async function submitBooking(event) {
     event.preventDefault();
 
-    /*Check whether dates have been selected*/
     if (!selectedCheckIn || !selectedCheckOut) {
         alert("Please select Check-in and Check-out dates first!");
         showSection('search-section');
         return;
     }
 
-    /*Check again before creating the booking*/
-    /*This prevents double booking for the same dates*/
-    if (
-        !currentSelectedRoom ||
-        isRoomBooked(
-            currentSelectedRoom.id,
-            selectedCheckIn,
-            selectedCheckOut
-        )
-    ) {
-        alert("Sorry, this room is no longer available for the selected dates!");
-        renderRooms(sampleRooms);
+    if (!currentSelectedRoom) {
+        alert("Please select a room first!");
         showSection('search-section');
         return;
     }
 
-    const newBooking = {
-        id: 'BK-' + Date.now().toString().slice(-4),
-
+    const bookingPayload = {
+        guestName: document.getElementById('guest-name').value,
         roomId: currentSelectedRoom.id,
-
-        guest: document.getElementById('guest-name').value,
-        email: document.getElementById('guest-email').value,
-        phone: document.getElementById('guest-phone').value,
-
-        room: currentSelectedRoom.name,
-        price: currentSelectedRoom.price,
-        img: currentSelectedRoom.img,
-
-        // Save the booking dates
         checkIn: selectedCheckIn,
-        checkOut: selectedCheckOut,
-
-        status: 'Pending'
+        checkOut: selectedCheckOut
     };
 
-    bookings.push(newBooking);
+    try {
+        const response = await fetch(`${API_BASE_URL}/bookings`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(bookingPayload)
+        });
+        const result = await response.json();
 
-    document.getElementById('guest-name').value = '';
-    document.getElementById('guest-email').value = '';
-    document.getElementById('guest-phone').value = '';
+        if (response.ok) {
+            const newBooking = {
+                id: 'BK-' + result.booking.id,
+                roomId: currentSelectedRoom.id,
+                guest: bookingPayload.guestName,
+                email: document.getElementById('guest-email').value,
+                phone: document.getElementById('guest-phone').value,
+                room: currentSelectedRoom.name,
+                price: currentSelectedRoom.price,
+                img: currentSelectedRoom.img,
+                checkIn: selectedCheckIn,
+                checkOut: selectedCheckOut,
+                status: 'Pending'
+            };
+            bookings.push(newBooking);
 
-    renderRooms(sampleRooms);
-    showBookingDetails(newBooking.id);
+            document.getElementById('guest-name').value = '';
+            document.getElementById('guest-email').value = '';
+            document.getElementById('guest-phone').value = '';
+
+            showBookingDetails(newBooking.id);
+        } else {
+            alert(result.message || "Booking failed! Please try again.");
+        }
+    } catch (error) {
+        console.error("Connection error:", error);
+        alert("Cannot connect to the backend server!");
+    }
 }
 
 /*Booking Successful page, including CopyID button and modal to send message to email/ SMS to phone*/
@@ -560,4 +580,4 @@ function updateBookingStatus(bookingId, newStatus) {
     }
 }
 
-renderRooms(sampleRooms);
+document.addEventListener('DOMContentLoaded', loadRoomsFromBackend);
