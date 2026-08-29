@@ -74,9 +74,9 @@ function showSection(sectionId) {
         targetSection.classList.add('active-section');
     }
 
-    if (sectionId === 'admin-manage-section') renderAdminBookings();
+    if (sectionId === 'admin-manage-section') loadAdminBookings();
     if (sectionId === 'guest-booking-list-section') renderGuestBookings();
-    if (sectionId === 'admin-room-types-section') renderAdminRoomTypes();
+    if (sectionId === 'admin-room-types-section') loadAdminRoomTypes();
     if (sectionId === 'search-section') renderRooms(sampleRooms);
     if (sectionId === 'admin-home-section') {
         const activeBookings = bookings.filter(b => b.status !== 'Cancelled by Guest');
@@ -283,7 +283,9 @@ async function submitBooking(event) {
         guestName: document.getElementById('guest-name').value,
         roomId: currentSelectedRoom.id,
         checkIn: selectedCheckIn,
-        checkOut: selectedCheckOut
+        checkOut: selectedCheckOut,
+        phone: document.getElementById('guest-phone').value,
+        email: document.getElementById('guest-email').value
     };
 
     try {
@@ -379,7 +381,7 @@ function renderGuestBookings() {
 }
 
 /* Excute searching(Booking ID + Phone compare)*/
-function searchGuestBookings() {
+async function searchGuestBookings() {
     const queryId = document.getElementById('search-booking-id').value.toLowerCase().trim();
     const queryPhone = document.getElementById('search-booking-phone').value.toLowerCase().trim();
     const container = document.getElementById('guest-booking-cards');
@@ -390,11 +392,22 @@ function searchGuestBookings() {
         return;
     }
 
-    const matchedBookings = bookings.filter(b => 
-        b.status !== 'Cancelled by Guest' && 
-        b.id.toLowerCase() === queryId &&
-        b.phone.toLowerCase() === queryPhone
-    );
+    try {
+        const response = await fetch(`${API_BASE_URL}/bookings`);
+        const result = await response.json();
+        bookings = result.data || [];
+    } catch (err) {
+        console.error("Cannot load bookings:", err);
+        container.innerHTML = '<p style="color:#dc2626;">Cannot connect to server.</p>';
+        return;
+    }
+
+    const matchedBookings = bookings.filter(b => {
+    const displayId = ('BK-' + b.id).toLowerCase();
+    return b.status !== 'Cancelled by Guest' &&
+           displayId === queryId &&
+           b.phone && b.phone.toLowerCase() === queryPhone;
+    });
 
     if (matchedBookings.length === 0) {
         container.innerHTML = '<p style="color:#dc2626;">No matching booking found. Please check your Booking ID and Phone Number.</p>';
@@ -405,7 +418,7 @@ function searchGuestBookings() {
         <div class="room-card" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; background: white;">
             <img src="${b.img}" style="width:100%; height:160px; object-fit:cover; border-radius:8px; margin-bottom:12px;">
             <div>
-                <span class="tag" style="background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:4px; font-size:12px;">Booking ID: ${b.id}</span>
+                <span class="tag" style="background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:4px; font-size:12px;">Booking ID: BK-${b.id}</span>
                 <h3 style="font-size:16px; margin: 6px 0;">${b.room}</h3>
                 <p style="font-size:14px; color:#475569; margin-bottom:4px;">Guest: ${b.guest}</p>
                 <p style="font-size:14px; color:#475569; margin-bottom:4px;">Phone: ${b.phone}</p>
@@ -421,14 +434,27 @@ function searchGuestBookings() {
 }
 
 /*Cancel booking order*/
-function cancelBookingByGuest(bookingId) {
-    if (confirm('Are you sure you want to cancel this booking?')) {
-        const b = bookings.find(item => item.id === bookingId);
-        if (b) {
-            b.status = 'Cancelled by Guest';
+async function cancelBookingByGuest(bookingId) {
+    if (!confirm('Are you sure you want to cancel this booking?')) return;
+
+    const numericId = Number(String(bookingId).replace('BK-', ''));
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/bookings/${numericId}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'Cancelled by Guest' })
+        });
+        const result = await response.json();
+
+        if (response.ok) {
             searchGuestBookings();
-            renderRooms(sampleRooms);
+        } else {
+            alert(result.message || "Failed to cancel booking");
         }
+    } catch (err) {
+        console.error(err);
+        alert("Cannot connect to backend server!");
     }
 }
 
@@ -493,7 +519,7 @@ function closeAddRoomModal() {
     document.getElementById('add-room-modal').style.display = 'none';
 }
 
-function handleSaveRoomType(event) {
+async function handleSaveRoomType(event) {
     event.preventDefault();
     const editId = document.getElementById('edit-room-id').value;
     const name = document.getElementById('new-room-name').value.trim();
@@ -503,37 +529,78 @@ function handleSaveRoomType(event) {
 
     if (!img) img = 'img/Hotel Single Room.jpg';
 
-    if (editId) {
-        const room = sampleRooms.find(r => r.id == editId);
-        if (room) {
-            room.name = name;
-            room.price = price;
-            room.description = desc;
-            room.img = img;
-        }
-    } else {
-        const newRoom = {
-            id: Date.now(),
-            name: name,
-            price: price,
-            description: desc,
-            tag: "Available",
-            img: img
-        };
-        sampleRooms.push(newRoom);
-    }
+    const payload = { name, price, description: desc, img };
 
-    closeAddRoomModal();
-    renderAdminRoomTypes();
-    renderRooms(sampleRooms);
+    try {
+        let response;
+        if (editId) {
+            response = await fetch(`${API_BASE_URL}/rooms/${editId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        } else {
+            response = await fetch(`${API_BASE_URL}/rooms`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        }
+
+        const result = await response.json();
+
+        if (response.ok) {
+            closeAddRoomModal();
+            loadAdminRoomTypes();
+        } else {
+            alert(result.message || "Failed to save room type");
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Cannot connect to backend server!");
+    }
 }
 
 /*Room type page delete function*/
-function deleteRoomType(roomId) {
-    if (confirm("Are you sure you want to delete this room type?")) {
-        sampleRooms = sampleRooms.filter(r => r.id !== roomId);
+async function deleteRoomType(roomId) {
+    if (!confirm("Are you sure you want to delete this room type?")) return;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/rooms/${roomId}`, {
+            method: 'DELETE'
+        });
+        const result = await response.json();
+
+        if (response.ok) {
+            loadAdminRoomTypes();
+        } else {
+            alert(result.message || "Failed to delete room type");
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Cannot connect to backend server!");
+    }
+}
+
+async function loadAdminBookings() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/bookings`);
+        const result = await response.json();
+        bookings = result.data || [];
+        renderAdminBookings();
+    } catch (err) {
+        console.error("Cannot load bookings:", err);
+    }
+}
+
+async function loadAdminRoomTypes() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/rooms`);
+        const result = await response.json();
+        sampleRooms = result.data || [];
         renderAdminRoomTypes();
-        renderRooms(sampleRooms);
+    } catch (err) {
+        console.error("Cannot load room types:", err);
     }
 }
 
@@ -549,7 +616,7 @@ function renderAdminBookings() {
     }
     tbody.innerHTML = visibleBookings.map(b => `
         <tr style="border-bottom: 1px solid #e2e8f0;">
-            <td style="padding:12px;">${b.id}</td>
+            <td style="padding:12px;">BK-${b.id}</td>
             <td style="padding:12px;">${b.guest}</td>
             <td style="padding:12px;">${b.room}</td>
             <td style="padding:12px;">
@@ -571,12 +638,26 @@ function renderAdminBookings() {
 }
 
 /*Room type page update*/
-function updateBookingStatus(bookingId, newStatus) {
-    const b = bookings.find(item => item.id === bookingId);
-    if (b) {
-        b.status = newStatus;
-        renderAdminBookings();
-        renderRooms(sampleRooms);
+async function updateBookingStatus(bookingId, newStatus) {
+    const numericId = Number(String(bookingId).replace('BK-', ''));
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/bookings/${numericId}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus })
+        });
+        const result = await response.json();
+
+        if (response.ok) {
+            loadAdminBookings();
+            renderRooms(sampleRooms);
+        } else {
+            alert(result.message || "Failed to update booking status");
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Cannot connect to backend server!");
     }
 }
 
