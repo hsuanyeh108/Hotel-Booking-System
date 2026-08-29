@@ -104,11 +104,7 @@ function renderRooms(roomsToRender) {
     if (!list) return;
 
     list.innerHTML = roomsToRender.map(room => {
-        const booked = isRoomBooked(
-            room.id,
-            selectedCheckIn,
-            selectedCheckOut
-        );
+        const booked = room.available === false;
         const tagText = booked ? "Non-available" : "Available";
         const tagBg = booked ? "#fee2e2" : "#dcfce7";
         const tagColor = booked ? "#dc2626" : "#15803d";
@@ -145,12 +141,7 @@ function filterRooms() {
              room.description.toLowerCase().includes(query));
 
         /*Check whether the room is available for selected dates*/
-        const availableForDates =
-            !isRoomBooked(
-                room.id,
-                selectedCheckIn,
-                selectedCheckOut
-            );
+        const availableForDates = room.available !== false;
         return matchesSearch && availableForDates;
     });
 
@@ -179,12 +170,7 @@ function searchRoomsByNavbar() {
              room.description.toLowerCase().includes(query));
 
         /*Filter by selected check-in / check-out dates*/
-        const availableForDates =
-            !isRoomBooked(
-                room.id,
-                selectedCheckIn,
-                selectedCheckOut
-            );
+        const availableForDates = room.available !== false;
 
         return matchesSearch && availableForDates;
     });
@@ -265,6 +251,7 @@ function selectRoom(roomId) {
 
 /*Submit booking form*/
 async function submitBooking(event) {
+
     event.preventDefault();
 
     if (!selectedCheckIn || !selectedCheckOut) {
@@ -289,40 +276,44 @@ async function submitBooking(event) {
     };
 
     try {
+
         const response = await fetch(`${API_BASE_URL}/bookings`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify(bookingPayload)
         });
+
         const result = await response.json();
 
         if (response.ok) {
-            const newBooking = {
-                id: 'BK-' + result.booking.id,
-                roomId: currentSelectedRoom.id,
-                guest: bookingPayload.guestName,
-                email: document.getElementById('guest-email').value,
-                phone: document.getElementById('guest-phone').value,
-                room: currentSelectedRoom.name,
-                price: currentSelectedRoom.price,
-                img: currentSelectedRoom.img,
-                checkIn: selectedCheckIn,
-                checkOut: selectedCheckOut,
-                status: 'Pending'
-            };
+
+            // Use the booking created by the Backend
+            const newBooking = result.booking;
+
+            // Add the Backend booking to Frontend memory
             bookings.push(newBooking);
 
+            // Clear guest form
             document.getElementById('guest-name').value = '';
             document.getElementById('guest-email').value = '';
             document.getElementById('guest-phone').value = '';
 
+            // Show booking success page
             showBookingDetails(newBooking.id);
+
         } else {
+
             alert(result.message || "Booking failed! Please try again.");
+
         }
+
     } catch (error) {
+
         console.error("Connection error:", error);
         alert("Cannot connect to the backend server!");
+
     }
 }
 
@@ -336,7 +327,7 @@ function showBookingDetails(bookingId) {
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; background:#f8fafc; padding:10px; border-radius:6px; border:1px dashed #cbd5e1;">
                 <div>
                     <span style="font-size:12px; color:#64748b; display:block;">Your Booking ID</span>
-                    <strong style="color:#1E3A8A; font-size:18px;">${b.id}</strong>
+                    <strong style="color:#1E3A8A; font-size:18px;">BK-${b.id}</strong>
                 </div>
                 <button onclick="copyBookingId('${b.id}')" style="background:#1E3A8A; color:white; border:none; padding:6px 14px; border-radius:4px; cursor:pointer; font-size:13px; font-weight:bold;">Copy ID</button>
             </div>
