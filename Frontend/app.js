@@ -318,44 +318,127 @@ async function submitBooking(event) {
 }
 
 /*Booking Successful page, including CopyID button and modal to send message to email/ SMS to phone*/
-function showBookingDetails(bookingId) {
-    const b = bookings.find(item => item.id === bookingId);
-    if (!b) return;
+async function showBookingDetails(bookingId) {
+    const numericId = Number(String(bookingId).replace('BK-', ''));
+    const b = bookings.find(item => item.id === numericId);
+    try {
+        const response = await fetch(`${API_BASE_URL}/bookings`);
+        const result = await response.json();
 
-    document.getElementById('success-details').innerHTML = `
-        <div style="background:#fff; padding:20px; border-radius:8px; border:1px solid #e2e8f0; margin: 15px 0;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; background:#f8fafc; padding:10px; border-radius:6px; border:1px dashed #cbd5e1;">
-                <div>
-                    <span style="font-size:12px; color:#64748b; display:block;">Your Booking ID</span>
-                    <strong style="color:#1E3A8A; font-size:18px;">BK-${b.id}</strong>
+        if (!response.ok || !result.success) {
+            alert("Cannot load booking details.");
+            return;
+        }
+
+        const allBookings = result.data || [];
+
+        const b = allBookings.find(item => item.id === numericId);
+
+        if (!b) {
+            alert("Booking not found.");
+            return;
+        }
+
+        // Keep Frontend memory synchronized with Backend
+        bookings = allBookings;
+
+        document.getElementById('success-details').innerHTML = `
+            <div style="background:#fff; padding:20px; border-radius:8px; border:1px solid #e2e8f0; margin: 15px 0;">
+
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; background:#f8fafc; padding:10px; border-radius:6px; border:1px dashed #cbd5e1;">
+
+                    <div>
+                        <span style="font-size:12px; color:#64748b; display:block;">
+                            Your Booking ID
+                        </span>
+
+                        <strong style="color:#1E3A8A; font-size:18px;">
+                            BK-${b.id}
+                        </strong>
+                    </div>
+
+                    <button
+                        onclick="copyBookingId('${b.id}')"
+                        style="background:#1E3A8A; color:white; border:none; padding:6px 14px; border-radius:4px; cursor:pointer; font-size:13px; font-weight:bold;">
+                        Copy ID
+                    </button>
+
                 </div>
-                <button onclick="copyBookingId('${b.id}')" style="background:#1E3A8A; color:white; border:none; padding:6px 14px; border-radius:4px; cursor:pointer; font-size:13px; font-weight:bold;">Copy ID</button>
-            </div>
 
-            <p style="margin-bottom:8px;"><strong>Guest Name:</strong> ${b.guest}</p>
-            <p style="margin-bottom:8px;"><strong>Phone:</strong> ${b.phone}</p>
-            <p style="margin-bottom:8px;"><strong>Email:</strong> ${b.email}</p>
-            <p style="margin-bottom:8px;"><strong>Room Type:</strong> ${b.room}</p>
-            <p style="margin-bottom:8px;"><strong>Total Price:</strong> ${b.price}</p>
-            <p style="margin-bottom:16px;"><strong>Status:</strong> <span style="font-weight:bold; color:${b.status === 'Confirmed' ? '#166534' : b.status === 'Pending' ? '#d97706' : '#dc2626'}">${b.status}</span></p>
+                <p style="margin-bottom:8px;">
+                    <strong>Guest Name:</strong> ${b.guest}
+                </p>
 
-            <!-- modal for Email / SMS to phone-->
-            <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:12px; border-radius:6px; font-size:13px; color:#166534;">
-                <p style="margin:0 0 4px 0; font-weight:bold;">✉️ Confirmation Sent!</p>
-                <p style="margin:0; line-height:1.4;">A booking confirmation email has been sent to <strong>${b.email}</strong> and SMS notification to <strong>${b.phone}</strong>. Please save your Booking ID for future search.</p>
+                <p style="margin-bottom:8px;">
+                    <strong>Phone:</strong> ${b.phone}
+                </p>
+
+                <p style="margin-bottom:8px;">
+                    <strong>Email:</strong> ${b.email}
+                </p>
+
+                <p style="margin-bottom:8px;">
+                    <strong>Room Type:</strong> ${b.room}
+                </p>
+
+                <p style="margin-bottom:8px;">
+                    <strong>Total Price:</strong> ${b.price}
+                </p>
+
+                <p style="margin-bottom:16px;">
+                    <strong>Status:</strong>
+                    <span style="
+                        font-weight:bold;
+                        color:${
+                            b.status === 'Confirmed'
+                                ? '#166534'
+                                : b.status === 'Pending'
+                                ? '#d97706'
+                                : '#dc2626'
+                        }">
+                        ${b.status}
+                    </span>
+                </p>
+
+                <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:12px; border-radius:6px; font-size:13px; color:#166534;">
+
+                    <p style="margin:0 0 4px 0; font-weight:bold;">
+                        ✉️ Confirmation Sent!
+                    </p>
+
+                    <p style="margin:0; line-height:1.4;">
+                        A booking confirmation email has been sent to
+                        <strong>${b.email}</strong>
+                        and SMS notification to
+                        <strong>${b.phone}</strong>.
+                        Please save your Booking ID for future search.
+                    </p>
+
+                </div>
+
             </div>
-        </div>
-    `;
-    showSection('success-section');
+        `;
+
+        showSection('success-section');
+
+    } catch (error) {
+
+        console.error("Cannot load booking:", error);
+        alert("Cannot connect to backend server!");
+
+    }
 }
-
 /* One button to copy Booking ID*/
 function copyBookingId(id) {
-    navigator.clipboard.writeText(id).then(() => {
-        alert("Booking ID copied to clipboard: " + id);
-    }).catch(() => {
-        alert("Booking ID: " + id);
-    });
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(id).then(() => {
+            alert("Booking ID copied to clipboard: " + id);
+        }).catch(() => {
+            alert("Booking ID: " + id);
+        });
+    } else {
+        alert("Booking ID: BK-" + id);
+    }
 }
 
 /*Guest Booking Finding page*/
