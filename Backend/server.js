@@ -10,7 +10,7 @@ const mongoose = require('mongoose');
 /* build an express servers to application using, name as app */
 const app = express();
 /* using .env file port number priority, if non then using the default setting 80 */
-const PORT = process.env.PORT || 80;
+const PORT = process.env.PORT || 3000;
 
 /*Middleware setting */
 app.use(cors()); /* permit the frontend can call the API */
@@ -496,7 +496,7 @@ app.delete('/api/rooms/:id', async (req, res) => {
 
 /* Server started in the port and listen to the demand, if successfully start will print the words in the terminal */
 app.listen(PORT, () => {
-  console.log(`Booking Service are operating on Port ${PORT}...`);
+    console.log(`Booking Service are operating on Port ${PORT}...`);
 });
 /* export app for the using of Mocha/Chai testing*/
 module.exports = app;
